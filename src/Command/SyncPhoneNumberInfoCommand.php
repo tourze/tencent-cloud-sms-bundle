@@ -30,7 +30,7 @@ class SyncPhoneNumberInfoCommand extends Command
             try {
                 $this->phoneNumberInfoService->syncPhoneNumberInfo($account);
                 $output->writeln(sprintf('账号 %s 手机号码信息同步完成', $account->getId()));
-            } catch (\Exception $e) {
+            } catch  (\Throwable $e) {
                 $output->writeln(sprintf('账号 %s 手机号码信息同步失败: %s', $account->getId(), $e->getMessage()));
             }
         }
