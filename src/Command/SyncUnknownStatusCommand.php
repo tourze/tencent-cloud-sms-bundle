@@ -34,7 +34,7 @@ class SyncUnknownStatusCommand extends Command
             $this->smsStatusService->syncUnknownStatus($limit);
             $output->writeln('未知状态短信同步完成');
             return Command::SUCCESS;
-        } catch  (\Throwable $e) {
+        } catch (\Throwable $e) {
             $output->writeln(sprintf('未知状态短信同步失败: %s', $e->getMessage()));
             return Command::FAILURE;
         }

@@ -26,7 +26,7 @@ class SyncSmsStatusCommand extends Command
             $this->smsStatusService->syncStatus();
             $output->writeln('短信状态同步完成');
             return Command::SUCCESS;
-        } catch  (\Throwable $e) {
+        } catch (\Throwable $e) {
             $output->writeln(sprintf('短信状态同步失败: %s', $e->getMessage()));
             return Command::FAILURE;
         }
