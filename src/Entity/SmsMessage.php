@@ -10,50 +10,37 @@ use TencentCloudSmsBundle\Enum\MessageStatus;
 use TencentCloudSmsBundle\Repository\SmsMessageRepository;
 use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
-use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
-use Tourze\EasyAdmin\Attribute\Permission\AsPermission;
 
-#[AsPermission(title: '短信消息')]
 #[ORM\Table(name: 'tencent_cloud_sms_message', options: ['comment' => '短信消息'])]
 #[ORM\Entity(repositoryClass: SmsMessageRepository::class)]
 class SmsMessage
 {
     use TimestampableAware;
-    #[ListColumn(order: -1)]
-    #[ExportColumn]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
     private ?int $id = 0;
 
     #[IndexColumn]
-    #[ListColumn]
     #[ORM\ManyToOne(targetEntity: Account::class)]
     #[ORM\JoinColumn(nullable: false)]
     private ?Account $account = null;
 
-    #[ListColumn]
     #[ORM\Column(length: 50, options: ['comment' => '批次号'])]
     private string $batchId;
 
-    #[ListColumn]
     #[ORM\Column(length: 50, options: ['comment' => '短信签名'])]
     private string $signature;
 
-    #[ListColumn]
     #[ORM\Column(length: 50, options: ['comment' => '短信模板ID'])]
     private string $template;
 
-    #[ListColumn]
     #[ORM\Column(type: Types::JSON, options: ['comment' => '模板参数'])]
     private array $templateParams = [];
 
-    #[ListColumn]
     #[ORM\Column(type: Types::STRING, enumType: MessageStatus::class, options: ['comment' => '发送状态'])]
     private ?MessageStatus $status = null;
 
-    #[ListColumn]
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '发送时间'])]
     private ?\DateTimeInterface $sendTime = null;
 

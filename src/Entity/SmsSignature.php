@@ -14,79 +14,57 @@ use TencentCloudSmsBundle\Repository\SmsSignatureRepository;
 use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
-use Tourze\EasyAdmin\Attribute\Column\BoolColumn;
-use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
-use Tourze\EasyAdmin\Attribute\Field\FormField;
-use Tourze\EasyAdmin\Attribute\Permission\AsPermission;
 
-#[AsPermission(title: '短信签名管理')]
 #[ORM\Table(name: 'tencent_cloud_sms_signature', options: ['comment' => '短信签名'])]
 #[ORM\Entity(repositoryClass: SmsSignatureRepository::class)]
 class SmsSignature
 {
     use TimestampableAware;
-    #[ListColumn(order: -1)]
-    #[ExportColumn]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
     private ?int $id = 0;
 
-    #[ListColumn]
     #[ORM\ManyToOne(targetEntity: Account::class)]
     #[ORM\JoinColumn(nullable: false)]
     private ?Account $account = null;
 
-    #[ListColumn]
     #[ORM\Column(length: 20, unique: true, options: ['comment' => '签名ID'])]
     private ?string $signId = null;
 
-    #[ListColumn]
     #[ORM\Column(type: Types::STRING, length: 100, options: ['comment' => '签名名称'])]
     private ?string $signName = null;
 
-    #[ListColumn]
     #[ORM\Column(type: Types::STRING, enumType: SignType::class, options: ['comment' => '签名类型'])]
     private ?SignType $signType = null;
 
-    #[ListColumn]
     #[ORM\Column(type: Types::STRING, enumType: DocumentType::class, options: ['comment' => '证明类型'])]
     private ?DocumentType $documentType = null;
 
-    #[ListColumn]
     #[ORM\Column(type: Types::STRING, length: 255, options: ['comment' => '证明文件'])]
     private ?string $documentUrl = null;
 
-    #[ListColumn]
     #[ORM\Column(type: Types::STRING, enumType: SignReviewStatus::class, options: ['comment' => '签名状态'])]
     private ?SignReviewStatus $signStatus = null;
 
-    #[ListColumn]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '审核回复'])]
     private ?string $reviewReply = null;
 
-    #[ListColumn]
     #[ORM\Column(type: Types::BOOLEAN, options: ['comment' => '是否国际/港澳台短信'])]
     private bool $international = false;
 
-    #[ListColumn]
     #[ORM\Column(type: Types::STRING, enumType: SignPurpose::class, options: ['comment' => '签名用途'])]
     private ?SignPurpose $signPurpose = null;
 
-    #[ListColumn]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '签名内容'])]
     private ?string $signContent = null;
 
     #[ORM\OneToMany(mappedBy: 'signature', targetEntity: SmsMessage::class)]
     private Collection $messages;
 
-    #[BoolColumn]
     #[IndexColumn]
     #[TrackColumn]
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '有效', 'default' => 0])]
-    #[ListColumn(order: 97)]
-    #[FormField(order: 97)]
     private ?bool $valid = false;
 
     private bool $syncing = false;

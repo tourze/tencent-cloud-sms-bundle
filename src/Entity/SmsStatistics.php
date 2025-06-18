@@ -9,8 +9,6 @@ use TencentCloudSmsBundle\Entity\Embed\PackageStatistics;
 use TencentCloudSmsBundle\Entity\Embed\SendStatistics;
 use TencentCloudSmsBundle\Repository\SmsStatisticsRepository;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
-use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
 
 #[ORM\Entity(repositoryClass: SmsStatisticsRepository::class)]
 #[ORM\Table(name: 'tcs_sms_statistics')]
@@ -18,8 +16,6 @@ use Tourze\EasyAdmin\Attribute\Column\ListColumn;
 class SmsStatistics
 {
     use TimestampableAware;
-    #[ListColumn(order: -1)]
-    #[ExportColumn]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]

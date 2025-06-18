@@ -7,53 +7,39 @@ use Doctrine\ORM\Mapping as ORM;
 use TencentCloudSmsBundle\Repository\PhoneNumberInfoRepository;
 use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
-use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
-use Tourze\EasyAdmin\Attribute\Permission\AsPermission;
 
-#[AsPermission(title: '手机号信息')]
 #[ORM\Table(name: 'tencent_cloud_sms_phone_number_info', options: ['comment' => '手机号码信息'])]
 #[ORM\Entity(repositoryClass: PhoneNumberInfoRepository::class)]
 class PhoneNumberInfo
 {
     use TimestampableAware;
-    #[ListColumn(order: -1)]
-    #[ExportColumn]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
     private ?int $id = 0;
 
-    #[ListColumn]
     #[ORM\Column(length: 20, unique: true, options: ['comment' => '手机号码'])]
     private string $phoneNumber;
 
     #[IndexColumn]
-    #[ListColumn]
     #[ORM\Column(length: 20, nullable: true, options: ['comment' => '国家码'])]
     private ?string $nationCode = null;
 
-    #[ListColumn]
     #[ORM\Column(length: 20, nullable: true, options: ['comment' => '国家/地区ISO编码'])]
     private ?string $isoCode = null;
 
-    #[ListColumn]
     #[ORM\Column(length: 50, nullable: true, options: ['comment' => '国家/地区名称'])]
     private ?string $isoName = null;
 
-    #[ListColumn]
     #[ORM\Column(length: 20, nullable: true, options: ['comment' => '用户号码'])]
     private ?string $subscriberNumber = null;
 
-    #[ListColumn]
     #[ORM\Column(length: 20, nullable: true, options: ['comment' => '完整号码'])]
     private ?string $fullNumber = null;
 
-    #[ListColumn]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '查询结果'])]
     private ?string $message = null;
 
-    #[ListColumn]
     #[ORM\Column(length: 20, nullable: true, options: ['comment' => '查询状态码'])]
     private ?string $code = null;
 

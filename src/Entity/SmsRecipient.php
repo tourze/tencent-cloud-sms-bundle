@@ -8,68 +8,51 @@ use TencentCloudSmsBundle\Enum\SendStatus;
 use TencentCloudSmsBundle\Repository\SmsRecipientRepository;
 use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
-use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
-use Tourze\EasyAdmin\Attribute\Permission\AsPermission;
 
-#[AsPermission(title: '短信接收人')]
 #[ORM\Table(name: 'tencent_cloud_sms_recipient', options: ['comment' => '短信接收人'])]
 #[ORM\Entity(repositoryClass: SmsRecipientRepository::class)]
 class SmsRecipient
 {
     use TimestampableAware;
-    #[ListColumn(order: -1)]
-    #[ExportColumn]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
     private ?int $id = 0;
 
     #[IndexColumn]
-    #[ListColumn]
     #[ORM\ManyToOne(targetEntity: SmsMessage::class, inversedBy: 'recipients')]
     #[ORM\JoinColumn(nullable: false)]
     private ?SmsMessage $message = null;
 
     #[IndexColumn]
-    #[ListColumn]
     #[ORM\ManyToOne(targetEntity: PhoneNumberInfo::class)]
     #[ORM\JoinColumn(nullable: false)]
     private ?PhoneNumberInfo $phoneNumber = null;
 
-    #[ListColumn]
     #[ORM\Column(type: Types::STRING, enumType: SendStatus::class, options: ['comment' => '发送状态'])]
     private ?SendStatus $status = null;
 
-    #[ListColumn]
     #[ORM\Column(length: 50, nullable: true, options: ['comment' => '腾讯云返回的序列号'])]
     private ?string $serialNo = null;
 
-    #[ListColumn]
     #[ORM\Column(length: 50, nullable: true, options: ['comment' => '计费条数'])]
     private ?int $fee = null;
 
-    #[ListColumn]
     #[ORM\Column(length: 50, nullable: true, options: ['comment' => '腾讯云状态码'])]
     private ?string $code = null;
 
-    #[ListColumn]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '腾讯云返回消息'])]
     private ?string $statusMessage = null;
 
-    #[ListColumn]
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '发送时间'])]
     private ?\DateTimeInterface $sendTime = null;
 
-    #[ListColumn]
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '接收时间'])]
     private ?\DateTimeInterface $receiveTime = null;
 
-    #[ListColumn]
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '状态更新时间'])]
     private ?\DateTimeInterface $statusTime = null;
 
-    #[ListColumn]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '腾讯云原始响应'])]
     private ?array $rawResponse = null;
 
