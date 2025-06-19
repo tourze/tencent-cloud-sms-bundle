@@ -39,8 +39,8 @@ class SmsStatusService
         }
 
         // 按账号同步状态
-        foreach ($groupedRecipients as $accountId => $recipients) {
-            $this->syncStatusByAccount($recipients);
+        foreach ($groupedRecipients as $accountId => $accountRecipients) {
+            $this->syncStatusByAccount($accountRecipients);
         }
     }
 
@@ -60,8 +60,8 @@ class SmsStatusService
         }
 
         // 按账号同步状态
-        foreach ($groupedRecipients as $accountId => $recipients) {
-            $this->syncStatusByAccount($recipients);
+        foreach ($groupedRecipients as $accountId => $accountRecipients) {
+            $this->syncStatusByAccount($accountRecipients);
         }
     }
 
@@ -99,14 +99,14 @@ class SmsStatusService
             // 建立序列号映射，方便更新
             $serialNoMap = [];
             foreach ($recipients as $recipient) {
-                if ($recipient->getSerialNo()) {
+                if ($recipient->getSerialNo() !== null && $recipient->getSerialNo() !== '') {
                     $serialNoMap[$recipient->getSerialNo()] = $recipient;
                 }
             }
 
             foreach ($pullStatusSet as $pullStatus) {
                 $recipient = $serialNoMap[$pullStatus->getSerialNo()] ?? null;
-                if (!$recipient) {
+                if ($recipient === null) {
                     continue;
                 }
 
@@ -114,7 +114,7 @@ class SmsStatusService
                 $recipient
                     ->setCode($pullStatus->getReportStatus())
                     ->setStatusMessage($pullStatus->getDescription())
-                    ->setReceiveTime(new \DateTime($pullStatus->getUserReceiveTime()))
+                    ->setReceiveTime(new \DateTime((string) $pullStatus->getUserReceiveTime()))
                     ->setStatusTime(new \DateTime())
                     ->setRawResponse($pullStatus->serialize());
 

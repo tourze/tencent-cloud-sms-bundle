@@ -10,11 +10,12 @@ use TencentCloudSmsBundle\Repository\AccountRepository;
 use TencentCloudSmsBundle\Service\PhoneNumberInfoService;
 
 #[AsCommand(
-    name: 'tencent-cloud:sms:sync:phone-number-info',
+    name: self::NAME,
     description: '同步手机号码信息',
 )]
 class SyncPhoneNumberInfoCommand extends Command
 {
+    public const NAME = 'tencent-cloud:sms:sync:phone-number-info';
     public function __construct(
         private readonly PhoneNumberInfoService $phoneNumberInfoService,
         private readonly AccountRepository $accountRepository,

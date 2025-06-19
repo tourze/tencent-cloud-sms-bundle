@@ -4,13 +4,14 @@ namespace TencentCloudSmsBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Stringable;
 use TencentCloudSmsBundle\Repository\PhoneNumberInfoRepository;
 use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 
 #[ORM\Table(name: 'tencent_cloud_sms_phone_number_info', options: ['comment' => '手机号码信息'])]
 #[ORM\Entity(repositoryClass: PhoneNumberInfoRepository::class)]
-class PhoneNumberInfo
+class PhoneNumberInfo implements Stringable
 {
     use TimestampableAware;
     #[ORM\Id]
@@ -152,4 +153,10 @@ class PhoneNumberInfo
     {
         $this->code = $code;
         return $this;
-    }}
+    }
+
+    public function __toString(): string
+    {
+        return sprintf('PhoneInfo[%s:%s]', $this->phoneNumber, $this->nationCode);
+    }
+}

@@ -14,11 +14,12 @@ use TencentCloudSmsBundle\Repository\AccountRepository;
 use TencentCloudSmsBundle\Service\StatisticsSyncService;
 
 #[AsCommand(
-    name: 'tencent-cloud:sms:sync-statistics',
+    name: self::NAME,
     description: '同步腾讯云短信统计数据',
 )]
 class SyncStatisticsCommand extends Command
 {
+    public const NAME = 'tencent-cloud:sms:sync-statistics';
     public function __construct(
         private readonly StatisticsSyncService $syncService,
         private readonly AccountRepository $accountRepository,
@@ -43,7 +44,7 @@ class SyncStatisticsCommand extends Command
         $endTime = new \DateTimeImmutable($input->getOption('end-time') ?? 'now');
         $accountId = $input->getOption('account-id');
 
-        $accounts = $accountId
+        $accounts = $accountId !== null
             ? [$this->entityManager->getReference(Account::class, $accountId)]
             : $this->accountRepository->findBy(['isEnabled' => true]);
 

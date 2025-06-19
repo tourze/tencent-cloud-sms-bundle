@@ -9,11 +9,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 use TencentCloudSmsBundle\Service\StatusSyncService;
 
 #[AsCommand(
-    name: 'tencent-cloud:sms:sync:template-status',
+    name: self::NAME,
     description: '同步短信模板状态',
 )]
 class SyncTemplateStatusCommand extends Command
 {
+    public const NAME = 'tencent-cloud:sms:sync:template-status';
     public function __construct(
         private readonly StatusSyncService $statusSyncService,
     ) {

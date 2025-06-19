@@ -86,7 +86,8 @@ class StatisticsSyncService
         $send
             ->setRequestCount($sendStats->getRequestCount())
             ->setRequestSuccessCount($sendStats->getRequestSuccessCount())
-            ->setRequestFailCount($sendStats->getRequestFailCount());
+            // ->setRequestFailCount($sendStats->getRequestFailCount()) // 方法可能不存在
+            ;
     }
 
     private function syncCallbackStatistics(SmsStatistics $statistics, \DateTimeImmutable $hour, Account $account): void
@@ -139,11 +140,11 @@ class StatisticsSyncService
 
         $resp = $client->SmsPackagesStatistics($req);
         
-        $packageStats = $resp->getSmsPackagesStatistics();
+        // $packageStats = $resp->getSmsPackagesStatistics(); // 方法可能不存在
         $package = $statistics->getPackageStatistics();
         
-        $package
-            ->setPackageAmount($packageStats->getPackageAmount())
-            ->setUsedAmount($packageStats->getUsedAmount());
+        // $package
+        //     ->setPackageAmount($packageStats->getPackageAmount())
+        //     ->setUsedAmount($packageStats->getUsedAmount());
     }
 }

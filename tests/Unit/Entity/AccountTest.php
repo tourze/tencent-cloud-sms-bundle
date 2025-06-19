@@ -75,14 +75,14 @@ class AccountTest extends TestCase
 
     public function testCreateTimeGetterSetter(): void
     {
-        $now = new \DateTime();
+        $now = new \DateTimeImmutable();
         $this->account->setCreateTime($now);
         $this->assertSame($now, $this->account->getCreateTime());
     }
 
     public function testUpdateTimeGetterSetter(): void
     {
-        $now = new \DateTime();
+        $now = new \DateTimeImmutable();
         $this->account->setUpdateTime($now);
         $this->assertSame($now, $this->account->getUpdateTime());
     }

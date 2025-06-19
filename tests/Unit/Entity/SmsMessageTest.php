@@ -130,14 +130,14 @@ class SmsMessageTest extends TestCase
 
     public function testCreateTimeGetterSetter(): void
     {
-        $now = new \DateTime();
+        $now = new \DateTimeImmutable();
         $this->message->setCreateTime($now);
         $this->assertSame($now, $this->message->getCreateTime());
     }
 
     public function testUpdateTimeGetterSetter(): void
     {
-        $now = new \DateTime();
+        $now = new \DateTimeImmutable();
         $this->message->setUpdateTime($now);
         $this->assertSame($now, $this->message->getUpdateTime());
     }

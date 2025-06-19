@@ -4,21 +4,22 @@ namespace TencentCloudSmsBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Stringable;
 use TencentCloudSmsBundle\Repository\AccountRepository;
 use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
-use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
-use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
+use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 
 /**
  * 密钥可前往官网控制台 https://console.cloud.tencent.com/cam/capi 进行获取
  */
 #[ORM\Entity(repositoryClass: AccountRepository::class)]
 #[ORM\Table(name: 'tencent_cloud_sms_account', options: ['comment' => '腾讯云账号'])]
-class Account
+class Account implements Stringable
 {
     use TimestampableAware;
+    use BlameableAware;
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
@@ -38,13 +39,6 @@ class Account
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '有效', 'default' => 0])]
     private ?bool $valid = false;
 
-    #[CreatedByColumn]
-    #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
-    private ?string $createdBy = null;
-
-    #[UpdatedByColumn]
-    #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
-    private ?string $updatedBy = null;
 
     public function getId(): ?int
     {
@@ -99,26 +93,8 @@ class Account
         return $this;
     }
 
-    public function setCreatedBy(?string $createdBy): self
+    public function __toString(): string
     {
-        $this->createdBy = $createdBy;
-
-        return $this;
+        return sprintf('Account[%s:%s]', $this->id, $this->name);
     }
-
-    public function getCreatedBy(): ?string
-    {
-        return $this->createdBy;
-    }
-
-    public function setUpdatedBy(?string $updatedBy): self
-    {
-        $this->updatedBy = $updatedBy;
-
-        return $this;
-    }
-
-    public function getUpdatedBy(): ?string
-    {
-        return $this->updatedBy;
-    }}
+}
