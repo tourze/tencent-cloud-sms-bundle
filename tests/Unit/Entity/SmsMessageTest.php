@@ -92,7 +92,7 @@ class SmsMessageTest extends TestCase
         $this->assertNull($this->message->getSendTime());
         
         // 设置发送时间
-        $now = new \DateTime();
+        $now = new \DateTimeImmutable();
         $this->message->setSendTime($now);
         $this->assertSame($now, $this->message->getSendTime());
     }

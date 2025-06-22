@@ -17,7 +17,7 @@ use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
 
 #[ORM\Table(name: 'tencent_cloud_sms_signature', options: ['comment' => '短信签名'])]
 #[ORM\Entity(repositoryClass: SmsSignatureRepository::class)]
-class SmsSignature
+class SmsSignature implements \Stringable
 {
     use TimestampableAware;
     #[ORM\Id]
@@ -221,7 +221,7 @@ class SmsSignature
     {
         if (!$this->messages->contains($message)) {
             $this->messages->add($message);
-            $message->setSignature($this);
+            $message->setSignature($this->signName ?? '');
         }
 
         return $this;
@@ -231,8 +231,8 @@ class SmsSignature
     {
         if ($this->messages->removeElement($message)) {
             // set the owning side to null (unless already changed)
-            if ($message->getSignature() === $this) {
-                $message->setSignature(null);
+            if ($message->getSignature() === ($this->signName ?? '')) {
+                $message->setSignature('');
             }
         }
 
@@ -249,4 +249,10 @@ class SmsSignature
         $this->valid = $valid;
 
         return $this;
-    }}
+    }
+
+    public function __toString(): string
+    {
+        return $this->signName ?? '';
+    }
+}

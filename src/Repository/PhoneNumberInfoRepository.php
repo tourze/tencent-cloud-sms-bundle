@@ -22,7 +22,7 @@ class PhoneNumberInfoRepository extends ServiceEntityRepository
     public function findByPhoneNumber(string $phoneNumber, ?string $countryCode = null): ?PhoneNumberInfo
     {
         $criteria = ['phoneNumber' => $phoneNumber];
-        if ($countryCode) {
+        if ($countryCode !== null) {
             $criteria['countryCode'] = $countryCode;
         }
         return $this->findOneBy($criteria);

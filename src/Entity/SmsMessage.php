@@ -13,7 +13,7 @@ use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 
 #[ORM\Table(name: 'tencent_cloud_sms_message', options: ['comment' => '短信消息'])]
 #[ORM\Entity(repositoryClass: SmsMessageRepository::class)]
-class SmsMessage
+class SmsMessage implements \Stringable
 {
     use TimestampableAware;
     #[ORM\Id]
@@ -41,8 +41,8 @@ class SmsMessage
     #[ORM\Column(type: Types::STRING, enumType: MessageStatus::class, options: ['comment' => '发送状态'])]
     private ?MessageStatus $status = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '发送时间'])]
-    private ?\DateTimeInterface $sendTime = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '发送时间'])]
+    private ?\DateTimeImmutable $sendTime = null;
 
     #[ORM\OneToMany(mappedBy: 'message', targetEntity: SmsRecipient::class, cascade: ['persist', 'remove'])]
     private Collection $recipients;
@@ -126,12 +126,12 @@ class SmsMessage
         return $this;
     }
 
-    public function getSendTime(): ?\DateTimeInterface
+    public function getSendTime(): ?\DateTimeImmutable
     {
         return $this->sendTime;
     }
 
-    public function setSendTime(?\DateTimeInterface $sendTime): static
+    public function setSendTime(?\DateTimeImmutable $sendTime): static
     {
         $this->sendTime = $sendTime;
         return $this;
@@ -162,4 +162,10 @@ class SmsMessage
         }
 
         return $this;
-    }}
+    }
+
+    public function __toString(): string
+    {
+        return sprintf('[%s] %s - %s', $this->batchId, $this->signature, $this->template);
+    }
+}

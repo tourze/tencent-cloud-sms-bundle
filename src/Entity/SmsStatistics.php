@@ -11,9 +11,9 @@ use TencentCloudSmsBundle\Repository\SmsStatisticsRepository;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 
 #[ORM\Entity(repositoryClass: SmsStatisticsRepository::class)]
-#[ORM\Table(name: 'tcs_sms_statistics')]
+#[ORM\Table(name: 'tcs_sms_statistics', options: ['comment' => '短信统计'])]
 #[ORM\UniqueConstraint(name: 'uniq_hour_account', columns: ['hour', 'account_id'])]
-class SmsStatistics
+class SmsStatistics implements \Stringable
 {
     use TimestampableAware;
     #[ORM\Id]
@@ -84,4 +84,10 @@ class SmsStatistics
     public function getPackageStatistics(): PackageStatistics
     {
         return $this->packageStatistics;
-    }}
+    }
+
+    public function __toString(): string
+    {
+        return sprintf('[%s] %s', $this->hour->format('Y-m-d H:i'), $this->account->getName());
+    }
+}

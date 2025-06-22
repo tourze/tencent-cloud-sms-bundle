@@ -30,7 +30,7 @@ class SmsSendService
 
         try {
             // 设置发送时间
-            $recipient->setSendTime(new \DateTime());
+            $recipient->setSendTime(new \DateTimeImmutable());
 
             // 构建请求
             $req = new SendSmsRequest();
@@ -56,7 +56,7 @@ class SmsSendService
                 ->setCode($sendStatus->getCode())
                 ->setStatusMessage($sendStatus->getMessage())
                 ->setRawResponse($resp->serialize())
-                ->setStatusTime(new \DateTime());
+                ->setStatusTime(new \DateTimeImmutable());
 
             // 根据返回码设置状态
             $status = match ($sendStatus->getCode()) {
@@ -89,7 +89,7 @@ class SmsSendService
                 ->setStatus(SmsSendStatus::FAIL)
                 ->setCode('Error')
                 ->setStatusMessage($e->getMessage())
-                ->setStatusTime(new \DateTime());
+                ->setStatusTime(new \DateTimeImmutable());
 
             $message->setStatus(MessageStatus::FAILED);
 

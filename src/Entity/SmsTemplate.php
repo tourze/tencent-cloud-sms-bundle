@@ -15,7 +15,7 @@ use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
 
 #[ORM\Table(name: 'tencent_cloud_sms_template', options: ['comment' => '短信模板'])]
 #[ORM\Entity(repositoryClass: SmsTemplateRepository::class)]
-class SmsTemplate
+class SmsTemplate implements \Stringable
 {
     use TimestampableAware;
     #[ORM\Id]
@@ -204,7 +204,7 @@ class SmsTemplate
     {
         if (!$this->messages->contains($message)) {
             $this->messages->add($message);
-            $message->setTemplate($this);
+            $message->setTemplate($this->templateId ?? '');
         }
 
         return $this;
@@ -214,8 +214,8 @@ class SmsTemplate
     {
         if ($this->messages->removeElement($message)) {
             // set the owning side to null (unless already changed)
-            if ($message->getTemplate() === $this) {
-                $message->setTemplate(null);
+            if ($message->getTemplate() === ($this->templateId ?? '')) {
+                $message->setTemplate('');
             }
         }
 
@@ -232,4 +232,10 @@ class SmsTemplate
         $this->valid = $valid;
 
         return $this;
-    }}
+    }
+
+    public function __toString(): string
+    {
+        return sprintf('[%s] %s', $this->templateId, $this->templateName);
+    }
+}

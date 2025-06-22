@@ -57,7 +57,7 @@ class SmsSignatureListener
             $resp = $client->AddSmsSign($req);
 
             // 保存返回的 SignId
-            $signature->setSignId($resp->getAddSignStatus()->getSignId());
+            $signature->setSignId((string) $resp->getAddSignStatus()->getSignId());
 
             $this->logger->info('短信签名创建成功', [
                 'signName' => $signature->getSignName(),

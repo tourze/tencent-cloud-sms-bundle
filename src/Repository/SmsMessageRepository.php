@@ -27,7 +27,7 @@ class SmsMessageRepository extends ServiceEntityRepository
     public function findByPhoneNumber(string $phoneNumber, ?string $countryCode = null): array
     {
         $criteria = ['phoneNumber' => $phoneNumber];
-        if ($countryCode) {
+        if ($countryCode !== null) {
             $criteria['countryCode'] = $countryCode;
         }
         return $this->findBy($criteria, ['createTime' => 'DESC']);

@@ -114,8 +114,8 @@ class SmsStatusService
                 $recipient
                     ->setCode($pullStatus->getReportStatus())
                     ->setStatusMessage($pullStatus->getDescription())
-                    ->setReceiveTime(new \DateTime((string) $pullStatus->getUserReceiveTime()))
-                    ->setStatusTime(new \DateTime())
+                    ->setReceiveTime(new \DateTimeImmutable((string) $pullStatus->getUserReceiveTime()))
+                    ->setStatusTime(new \DateTimeImmutable())
                     ->setRawResponse($pullStatus->serialize());
 
                 // 根据返回码设置状态

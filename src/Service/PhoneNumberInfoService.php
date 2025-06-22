@@ -58,7 +58,7 @@ class PhoneNumberInfoService
 
                 foreach ($phoneNumberInfoSet as $info) {
                     $phoneNumber = $phoneNumberMap[$info->getPhoneNumber()] ?? null;
-                    if (!$phoneNumber) {
+                    if ($phoneNumber === null) {
                         continue;
                     }
 
