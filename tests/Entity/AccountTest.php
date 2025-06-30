@@ -1,6 +1,6 @@
 <?php
 
-namespace TencentCloudSmsBundle\Tests\Unit\Entity;
+namespace TencentCloudSmsBundle\Tests\Entity;
 
 use PHPUnit\Framework\TestCase;
 use TencentCloudSmsBundle\Entity\Account;
@@ -45,15 +45,15 @@ class AccountTest extends TestCase
     {
         // 默认值应为false
         $this->assertFalse($this->account->isValid());
-        
+
         // 设置为true
         $this->account->setValid(true);
         $this->assertTrue($this->account->isValid());
-        
+
         // 设置为false
         $this->account->setValid(false);
         $this->assertFalse($this->account->isValid());
-        
+
         // 设置为null
         $this->account->setValid(null);
         $this->assertNull($this->account->isValid());
@@ -95,8 +95,40 @@ class AccountTest extends TestCase
             ->setSecretId('test-id')
             ->setSecretKey('test-key')
             ->setValid(true);
-        
+
         // 验证返回值是否为当前对象实例
         $this->assertSame($this->account, $result);
     }
-} 
+
+    public function testCanBeInstantiated(): void
+    {
+        $account = new Account();
+        $this->assertInstanceOf(Account::class, $account);
+    }
+
+    public function testImplementsStringable(): void
+    {
+        $account = new Account();
+        $this->assertInstanceOf(\Stringable::class, $account);
+        // Test that the string conversion works without error
+        $stringValue = (string) $account;
+        $this->assertNotEmpty($stringValue);
+    }
+
+    public function testDefaultValues(): void
+    {
+        $account = new Account();
+        $this->assertEquals(0, $account->getId());
+        $this->assertFalse($account->isValid());
+    }
+
+    public function testSettersReturnSelf(): void
+    {
+        $account = new Account();
+
+        $this->assertSame($account, $account->setName('test'));
+        $this->assertSame($account, $account->setSecretId('test-id'));
+        $this->assertSame($account, $account->setSecretKey('test-key'));
+        $this->assertSame($account, $account->setValid(true));
+    }
+}

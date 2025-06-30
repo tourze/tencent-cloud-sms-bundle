@@ -1,6 +1,6 @@
 <?php
 
-namespace TencentCloudSmsBundle\Tests\Unit\Entity;
+namespace TencentCloudSmsBundle\Tests\Entity;
 
 use Doctrine\Common\Collections\Collection;
 use PHPUnit\Framework\TestCase;
@@ -22,6 +22,11 @@ class SmsMessageTest extends TestCase
         $this->account->setName('测试账号')
             ->setSecretId('test-secret-id')
             ->setSecretKey('test-secret-key');
+        
+        // 设置必需的属性以避免 __toString 方法出错
+        $this->message->setSignature('测试签名')
+            ->setTemplate('测试模板')
+            ->setAccount($this->account);
     }
 
     public function testIdGetterSetter(): void
@@ -40,7 +45,7 @@ class SmsMessageTest extends TestCase
     {
         // 测试构造函数生成的批次号
         $this->assertNotEmpty($this->message->getBatchId());
-        
+
         // 测试手动设置的批次号
         $batchId = 'batch-123456';
         $this->message->setBatchId($batchId);
@@ -65,7 +70,7 @@ class SmsMessageTest extends TestCase
     {
         // 默认应为空数组
         $this->assertEquals([], $this->message->getTemplateParams());
-        
+
         // 设置参数
         $params = ['code' => '1234', 'product' => '测试产品'];
         $this->message->setTemplateParams($params);
@@ -76,11 +81,11 @@ class SmsMessageTest extends TestCase
     {
         // 默认状态应为SENDING
         $this->assertEquals(MessageStatus::SENDING, $this->message->getStatus());
-        
+
         // 设置为SUCCESS
         $this->message->setStatus(MessageStatus::SUCCESS);
         $this->assertEquals(MessageStatus::SUCCESS, $this->message->getStatus());
-        
+
         // 设置为FAILED
         $this->message->setStatus(MessageStatus::FAILED);
         $this->assertEquals(MessageStatus::FAILED, $this->message->getStatus());
@@ -90,7 +95,7 @@ class SmsMessageTest extends TestCase
     {
         // 默认应为null
         $this->assertNull($this->message->getSendTime());
-        
+
         // 设置发送时间
         $now = new \DateTimeImmutable();
         $this->message->setSendTime($now);
@@ -102,26 +107,26 @@ class SmsMessageTest extends TestCase
         // 默认应为空Collection
         $this->assertInstanceOf(Collection::class, $this->message->getRecipients());
         $this->assertEquals(0, $this->message->getRecipients()->count());
-        
+
         // 添加接收人
         $recipient1 = new SmsRecipient();
         $recipient1->setPhoneNumber((new PhoneNumberInfo())->setPhoneNumber('13800138000'));
-        
+
         $recipient2 = new SmsRecipient();
         $recipient2->setPhoneNumber((new PhoneNumberInfo())->setPhoneNumber('13900139000'));
-        
+
         // 添加接收人并验证
         $this->message->addRecipient($recipient1);
         $this->assertEquals(1, $this->message->getRecipients()->count());
         $this->assertEquals($this->message, $recipient1->getMessage());
-        
+
         $this->message->addRecipient($recipient2);
         $this->assertEquals(2, $this->message->getRecipients()->count());
-        
+
         // 重复添加同一个接收人，数量不应增加
         $this->message->addRecipient($recipient1);
         $this->assertEquals(2, $this->message->getRecipients()->count());
-        
+
         // 删除接收人并验证
         $this->message->removeRecipient($recipient1);
         $this->assertEquals(1, $this->message->getRecipients()->count());
@@ -151,8 +156,16 @@ class SmsMessageTest extends TestCase
             ->setTemplate('SMS_12345678')
             ->setTemplateParams(['code' => '1234'])
             ->setStatus(MessageStatus::SUCCESS);
-        
+
         // 验证返回值是否为当前对象实例
         $this->assertSame($this->message, $result);
     }
-} 
+
+    public function testImplementsStringable(): void
+    {
+        $this->assertInstanceOf(\Stringable::class, $this->message);
+        // Test that the string conversion works without error
+        $stringValue = (string) $this->message;
+        $this->assertNotEmpty($stringValue);
+    }
+}

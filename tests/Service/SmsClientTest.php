@@ -1,6 +1,6 @@
 <?php
 
-namespace TencentCloudSmsBundle\Tests\Unit\Service;
+namespace TencentCloudSmsBundle\Tests\Service;
 
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
