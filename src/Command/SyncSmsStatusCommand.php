@@ -15,6 +15,7 @@ use TencentCloudSmsBundle\Service\SmsStatusService;
 class SyncSmsStatusCommand extends Command
 {
     public const NAME = 'tencent-cloud:sms:sync:status';
+
     public function __construct(
         private readonly SmsStatusService $smsStatusService,
     ) {
@@ -26,9 +27,11 @@ class SyncSmsStatusCommand extends Command
         try {
             $this->smsStatusService->syncStatus();
             $output->writeln('短信状态同步完成');
+
             return Command::SUCCESS;
         } catch (\Throwable $e) {
             $output->writeln(sprintf('短信状态同步失败: %s', $e->getMessage()));
+
             return Command::FAILURE;
         }
     }

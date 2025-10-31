@@ -5,13 +5,12 @@ namespace TencentCloudSmsBundle\Repository;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use TencentCloudSmsBundle\Entity\SmsMessage;
+use Tourze\PHPUnitSymfonyKernelTest\Attribute\AsRepository;
 
 /**
- * @method SmsMessage|null find($id, $lockMode = null, $lockVersion = null)
- * @method SmsMessage|null findOneBy(array $criteria, array $orderBy = null)
- * @method SmsMessage[] findAll()
- * @method SmsMessage[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @extends ServiceEntityRepository<SmsMessage>
  */
+#[AsRepository(entityClass: SmsMessage::class)]
 class SmsMessageRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -19,17 +18,61 @@ class SmsMessageRepository extends ServiceEntityRepository
         parent::__construct($registry, SmsMessage::class);
     }
 
-    public function findBySerialNo(string $serialNo): ?SmsMessage
+    /**
+     * @return array<SmsMessage>
+     */
+    public function findBySerialNo(string $serialNo): array
     {
-        return $this->findOneBy(['serialNo' => $serialNo]);
+        $qb = $this->createQueryBuilder('m')
+            ->innerJoin('m.recipients', 'r')
+            ->where('r.serialNo = :serialNo')
+            ->setParameter('serialNo', $serialNo)
+            ->orderBy('m.createTime', 'DESC')
+        ;
+
+        /** @var array<SmsMessage> */
+        return $qb->getQuery()->getResult();
     }
 
-    public function findByPhoneNumber(string $phoneNumber, ?string $countryCode = null): array
+    /**
+     * @return array<SmsMessage>
+     */
+    public function findByPhoneNumber(string $phoneNumber, ?string $nationCode = null): array
     {
-        $criteria = ['phoneNumber' => $phoneNumber];
-        if ($countryCode !== null) {
-            $criteria['countryCode'] = $countryCode;
+        $qb = $this->createQueryBuilder('m')
+            ->innerJoin('m.recipients', 'r')
+            ->innerJoin('r.phoneNumber', 'p')
+            ->where('p.phoneNumber = :phoneNumber')
+            ->setParameter('phoneNumber', $phoneNumber)
+        ;
+
+        if (null !== $nationCode) {
+            $qb->andWhere('p.nationCode = :nationCode')
+                ->setParameter('nationCode', $nationCode)
+            ;
         }
-        return $this->findBy($criteria, ['createTime' => 'DESC']);
+
+        $qb->orderBy('m.createTime', 'DESC');
+
+        /** @var array<SmsMessage> */
+        return $qb->getQuery()->getResult();
+    }
+
+    public function save(SmsMessage $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->persist($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    public function remove(SmsMessage $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->remove($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
     }
 }

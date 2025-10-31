@@ -3,6 +3,7 @@
 namespace TencentCloudSmsBundle\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
 use TencentCloud\Common\Exception\TencentCloudSDKException;
 use TencentCloud\Sms\V20210111\Models\DescribeSignListStatus;
@@ -11,9 +12,11 @@ use TencentCloud\Sms\V20210111\Models\DescribeSmsTemplateListRequest;
 use TencentCloud\Sms\V20210111\Models\DescribeTemplateListStatus;
 use TencentCloudSmsBundle\Enum\SignReviewStatus;
 use TencentCloudSmsBundle\Enum\TemplateReviewStatus;
+use TencentCloudSmsBundle\Exception\JsonEncodingException;
 use TencentCloudSmsBundle\Repository\SmsSignatureRepository;
 use TencentCloudSmsBundle\Repository\SmsTemplateRepository;
 
+#[WithMonologChannel(channel: 'tencent_cloud_sms')]
 class StatusSyncService
 {
     public function __construct(
@@ -30,8 +33,13 @@ class StatusSyncService
         $signatures = $this->signatureRepository->findAll();
 
         foreach ($signatures as $signature) {
+            $account = $signature->getAccount();
+            if (null === $account) {
+                continue;
+            }
+
             try {
-                $client = $this->smsClient->create($signature->getAccount());
+                $client = $this->smsClient->create($account);
 
                 // 查询签名状态
                 $req = new DescribeSmsSignListRequest();
@@ -39,13 +47,17 @@ class StatusSyncService
                     'SignIdSet' => [$signature->getSignId()],
                     'International' => $signature->isInternational() ? 1 : 0,
                 ];
-                $req->fromJsonString(json_encode($params));
+                $jsonString = json_encode($params);
+                if (false === $jsonString) {
+                    throw new JsonEncodingException('JSON编码失败');
+                }
+                $req->fromJsonString($jsonString);
 
                 $resp = $client->DescribeSmsSignList($req);
                 /** @var DescribeSignListStatus[] $signStatusSet */
                 $signStatusSet = $resp->getDescribeSignListStatusSet();
 
-                if (!empty($signStatusSet)) {
+                if (count($signStatusSet) > 0) {
                     $status = $signStatusSet[0];
 
                     // 标记为同步更新
@@ -87,8 +99,13 @@ class StatusSyncService
         $templates = $this->templateRepository->findAll();
 
         foreach ($templates as $template) {
+            $account = $template->getAccount();
+            if (null === $account) {
+                continue;
+            }
+
             try {
-                $client = $this->smsClient->create($template->getAccount());
+                $client = $this->smsClient->create($account);
 
                 // 查询模板状态
                 $req = new DescribeSmsTemplateListRequest();
@@ -96,13 +113,17 @@ class StatusSyncService
                     'TemplateIdSet' => [$template->getTemplateId()],
                     'International' => $template->isInternational() ? 1 : 0,
                 ];
-                $req->fromJsonString(json_encode($params));
+                $jsonString = json_encode($params);
+                if (false === $jsonString) {
+                    throw new JsonEncodingException('JSON编码失败');
+                }
+                $req->fromJsonString($jsonString);
 
                 $resp = $client->DescribeSmsTemplateList($req);
                 /** @var DescribeTemplateListStatus[] $templateStatusSet */
                 $templateStatusSet = $resp->getDescribeTemplateStatusSet();
 
-                if (!empty($templateStatusSet)) {
+                if (count($templateStatusSet) > 0) {
                     $status = $templateStatusSet[0];
 
                     // 标记为同步更新

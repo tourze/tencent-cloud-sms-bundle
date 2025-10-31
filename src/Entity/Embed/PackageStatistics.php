@@ -19,10 +19,9 @@ class PackageStatistics
         return $this->packageAmount;
     }
 
-    public function setPackageAmount(int $packageAmount): self
+    public function setPackageAmount(int $packageAmount): void
     {
         $this->packageAmount = $packageAmount;
-        return $this;
     }
 
     public function getUsedAmount(): int
@@ -30,9 +29,8 @@ class PackageStatistics
         return $this->usedAmount;
     }
 
-    public function setUsedAmount(int $usedAmount): self
+    public function setUsedAmount(int $usedAmount): void
     {
         $this->usedAmount = $usedAmount;
-        return $this;
     }
 }

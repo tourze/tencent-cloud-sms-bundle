@@ -6,6 +6,8 @@ services:
 
   TencentCloudSmsBundle\Command\:
     resource: '../../Command/'
+  TencentCloudSmsBundle\Controller\:
+    resource: '../../Controller/'
   TencentCloudSmsBundle\EventSubscriber\:
     resource: '../../EventSubscriber/'
   TencentCloudSmsBundle\Service\:

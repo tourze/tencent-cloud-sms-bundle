@@ -6,13 +6,12 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use TencentCloudSmsBundle\Entity\Account;
 use TencentCloudSmsBundle\Entity\SmsStatistics;
+use Tourze\PHPUnitSymfonyKernelTest\Attribute\AsRepository;
 
 /**
- * @method SmsStatistics|null find($id, $lockMode = null, $lockVersion = null)
- * @method SmsStatistics|null findOneBy(array $criteria, array $orderBy = null)
- * @method SmsStatistics[] findAll()
- * @method SmsStatistics[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @extends ServiceEntityRepository<SmsStatistics>
  */
+#[AsRepository(entityClass: SmsStatistics::class)]
 class SmsStatisticsRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -29,10 +28,11 @@ class SmsStatisticsRepository extends ServiceEntityRepository
     }
 
     /**
-     * @return SmsStatistics[]
+     * @return array<SmsStatistics>
      */
     public function findByDateRange(\DateTimeImmutable $start, \DateTimeImmutable $end, Account $account): array
     {
+        /** @var array<SmsStatistics> */
         return $this->createQueryBuilder('s')
             ->andWhere('s.hour >= :start')
             ->andWhere('s.hour <= :end')
@@ -42,6 +42,25 @@ class SmsStatisticsRepository extends ServiceEntityRepository
             ->setParameter('account', $account)
             ->orderBy('s.hour', 'ASC')
             ->getQuery()
-            ->getResult();
+            ->getResult()
+        ;
+    }
+
+    public function save(SmsStatistics $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->persist($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    public function remove(SmsStatistics $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->remove($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
     }
 }

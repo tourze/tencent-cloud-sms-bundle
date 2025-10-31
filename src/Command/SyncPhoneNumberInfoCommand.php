@@ -16,6 +16,7 @@ use TencentCloudSmsBundle\Service\PhoneNumberInfoService;
 class SyncPhoneNumberInfoCommand extends Command
 {
     public const NAME = 'tencent-cloud:sms:sync:phone-number-info';
+
     public function __construct(
         private readonly PhoneNumberInfoService $phoneNumberInfoService,
         private readonly AccountRepository $accountRepository,

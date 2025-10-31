@@ -6,9 +6,9 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 use TencentCloudSmsBundle\Enum\MessageStatus;
 use TencentCloudSmsBundle\Repository\SmsMessageRepository;
-use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 
 #[ORM\Table(name: 'tencent_cloud_sms_message', options: ['comment' => '短信消息'])]
@@ -16,34 +16,49 @@ use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 class SmsMessage implements \Stringable
 {
     use TimestampableAware;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
-    private ?int $id = 0;
+    private int $id = 0;
 
-    #[IndexColumn]
-    #[ORM\ManyToOne(targetEntity: Account::class)]
+    #[ORM\ManyToOne(targetEntity: Account::class, cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: false)]
     private ?Account $account = null;
 
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 50)]
     #[ORM\Column(length: 50, options: ['comment' => '批次号'])]
     private string $batchId;
 
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 50)]
     #[ORM\Column(length: 50, options: ['comment' => '短信签名'])]
     private string $signature;
 
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 50)]
     #[ORM\Column(length: 50, options: ['comment' => '短信模板ID'])]
     private string $template;
 
+    /**
+     * @var array<string, mixed> 模板参数
+     */
+    #[Assert\Type(type: 'array')]
     #[ORM\Column(type: Types::JSON, options: ['comment' => '模板参数'])]
     private array $templateParams = [];
 
-    #[ORM\Column(type: Types::STRING, enumType: MessageStatus::class, options: ['comment' => '发送状态'])]
+    #[Assert\Choice(callback: [MessageStatus::class, 'cases'])]
+    #[ORM\Column(type: Types::INTEGER, enumType: MessageStatus::class, options: ['comment' => '发送状态'])]
     private ?MessageStatus $status = null;
 
+    #[Assert\Type(type: '\DateTimeImmutable')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '发送时间'])]
     private ?\DateTimeImmutable $sendTime = null;
 
+    /**
+     * @var Collection<int, SmsRecipient> 短信接收者列表
+     */
     #[ORM\OneToMany(mappedBy: 'message', targetEntity: SmsRecipient::class, cascade: ['persist', 'remove'])]
     private Collection $recipients;
 
@@ -55,7 +70,7 @@ class SmsMessage implements \Stringable
         $this->batchId = substr(md5(uniqid()), 0, 32);
     }
 
-    public function getId(): ?int
+    public function getId(): int
     {
         return $this->id;
     }
@@ -65,10 +80,9 @@ class SmsMessage implements \Stringable
         return $this->account;
     }
 
-    public function setAccount(?Account $account): static
+    public function setAccount(?Account $account): void
     {
         $this->account = $account;
-        return $this;
     }
 
     public function getBatchId(): string
@@ -76,10 +90,9 @@ class SmsMessage implements \Stringable
         return $this->batchId;
     }
 
-    public function setBatchId(string $batchId): static
+    public function setBatchId(string $batchId): void
     {
         $this->batchId = $batchId;
-        return $this;
     }
 
     public function getSignature(): string
@@ -87,10 +100,9 @@ class SmsMessage implements \Stringable
         return $this->signature;
     }
 
-    public function setSignature(string $signature): static
+    public function setSignature(string $signature): void
     {
         $this->signature = $signature;
-        return $this;
     }
 
     public function getTemplate(): string
@@ -98,21 +110,21 @@ class SmsMessage implements \Stringable
         return $this->template;
     }
 
-    public function setTemplate(string $template): static
+    public function setTemplate(string $template): void
     {
         $this->template = $template;
-        return $this;
     }
 
+    /** @return array<string, mixed> */
     public function getTemplateParams(): array
     {
         return $this->templateParams;
     }
 
-    public function setTemplateParams(array $templateParams): static
+    /** @param array<string, mixed> $templateParams */
+    public function setTemplateParams(array $templateParams): void
     {
         $this->templateParams = $templateParams;
-        return $this;
     }
 
     public function getStatus(): ?MessageStatus
@@ -120,10 +132,9 @@ class SmsMessage implements \Stringable
         return $this->status;
     }
 
-    public function setStatus(?MessageStatus $status): static
+    public function setStatus(?MessageStatus $status): void
     {
         $this->status = $status;
-        return $this;
     }
 
     public function getSendTime(): ?\DateTimeImmutable
@@ -131,28 +142,26 @@ class SmsMessage implements \Stringable
         return $this->sendTime;
     }
 
-    public function setSendTime(?\DateTimeImmutable $sendTime): static
+    public function setSendTime(?\DateTimeImmutable $sendTime): void
     {
         $this->sendTime = $sendTime;
-        return $this;
     }
 
+    /** @return Collection<int, SmsRecipient> */
     public function getRecipients(): Collection
     {
         return $this->recipients;
     }
 
-    public function addRecipient(SmsRecipient $recipient): static
+    public function addRecipient(SmsRecipient $recipient): void
     {
         if (!$this->recipients->contains($recipient)) {
             $this->recipients->add($recipient);
             $recipient->setMessage($this);
         }
-
-        return $this;
     }
 
-    public function removeRecipient(SmsRecipient $recipient): static
+    public function removeRecipient(SmsRecipient $recipient): void
     {
         if ($this->recipients->removeElement($recipient)) {
             // set the owning side to null (unless already changed)
@@ -160,8 +169,6 @@ class SmsMessage implements \Stringable
                 $recipient->setMessage(null);
             }
         }
-
-        return $this;
     }
 
     public function __toString(): string

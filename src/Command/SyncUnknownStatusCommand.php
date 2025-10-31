@@ -16,6 +16,7 @@ use TencentCloudSmsBundle\Service\SmsStatusService;
 class SyncUnknownStatusCommand extends Command
 {
     public const NAME = 'tencent-cloud:sms:sync:unknown-status';
+
     public function __construct(
         private readonly SmsStatusService $smsStatusService,
     ) {
@@ -25,18 +26,23 @@ class SyncUnknownStatusCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addOption('limit', 'l', InputOption::VALUE_OPTIONAL, '每次同步的最大记录数', 100);
+            ->addOption('limit', 'l', InputOption::VALUE_OPTIONAL, '每次同步的最大记录数', 100)
+        ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         try {
-            $limit = (int) $input->getOption('limit');
+            $limitOption = $input->getOption('limit');
+            $limit = is_numeric($limitOption) ? (int) $limitOption : 100;
+
             $this->smsStatusService->syncUnknownStatus($limit);
             $output->writeln('未知状态短信同步完成');
+
             return Command::SUCCESS;
         } catch (\Throwable $e) {
             $output->writeln(sprintf('未知状态短信同步失败: %s', $e->getMessage()));
+
             return Command::FAILURE;
         }
     }

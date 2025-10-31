@@ -15,6 +15,7 @@ use TencentCloudSmsBundle\Service\StatusSyncService;
 class SyncSignStatusCommand extends Command
 {
     public const NAME = 'tencent-cloud:sms:sync:sign-status';
+
     public function __construct(
         private readonly StatusSyncService $statusSyncService,
     ) {

@@ -2,158 +2,151 @@
 
 namespace TencentCloudSmsBundle\Tests\Entity;
 
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
 use TencentCloudSmsBundle\Entity\PhoneNumberInfo;
+use Tourze\PHPUnitDoctrineEntity\AbstractEntityTestCase;
 
-class PhoneNumberInfoTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(PhoneNumberInfo::class)]
+final class PhoneNumberInfoTest extends AbstractEntityTestCase
 {
-    private PhoneNumberInfo $phoneNumberInfo;
-
-    public function testPhoneNumberGetterSetter(): void
+    /**
+     * 创建被测实体的一个实例.
+     */
+    protected function createEntity(): PhoneNumberInfo
     {
-        $phoneNumber = '13800138000';
-        $result = $this->phoneNumberInfo->setPhoneNumber($phoneNumber);
+        $phoneNumberInfo = new PhoneNumberInfo();
+        $phoneNumberInfo->setPhoneNumber('13800138000');
 
-        $this->assertSame($this->phoneNumberInfo, $result);
-        $this->assertEquals($phoneNumber, $this->phoneNumberInfo->getPhoneNumber());
+        return $phoneNumberInfo;
     }
 
-    public function testNationCodeGetterSetter(): void
+    /**
+     * 提供属性及其样本值的 Data Provider.
+     *
+     * @return iterable<string, array{0: string, 1: mixed}>
+     */
+    public static function propertiesProvider(): iterable
     {
-        $nationCode = '86';
-        $result = $this->phoneNumberInfo->setNationCode($nationCode);
-
-        $this->assertSame($this->phoneNumberInfo, $result);
-        $this->assertEquals($nationCode, $this->phoneNumberInfo->getNationCode());
+        return [
+            'phoneNumber' => ['phoneNumber', '13800138000'],
+            'nationCode' => ['nationCode', '86'],
+            'isoCode' => ['isoCode', 'CN'],
+            'isoName' => ['isoName', 'China'],
+            'subscriberNumber' => ['subscriberNumber', '13800138000'],
+            'fullNumber' => ['fullNumber', '+8613800138000'],
+            'message' => ['message', 'Success'],
+            'code' => ['code', '0'],
+            'syncing' => ['syncing', false],
+        ];
     }
 
-    public function testIsoCodeGetterSetter(): void
+    public function testSettersWork(): void
     {
-        $isoCode = 'CN';
-        $result = $this->phoneNumberInfo->setIsoCode($isoCode);
+        // 测试setter方法功能正常
+        $entity = $this->createEntity();
+        $entity->setPhoneNumber('13800138000');
+        $entity->setNationCode('86');
+        $entity->setIsoCode('CN');
+        $entity->setIsoName('China');
+        $entity->setSubscriberNumber('13800138000');
+        $entity->setFullNumber('+8613800138000');
+        $entity->setMessage('Success');
+        $entity->setCode('0');
+        $entity->setSyncing(true);
 
-        $this->assertSame($this->phoneNumberInfo, $result);
-        $this->assertEquals($isoCode, $this->phoneNumberInfo->getIsoCode());
-    }
-
-    public function testIsoNameGetterSetter(): void
-    {
-        $isoName = 'China';
-        $result = $this->phoneNumberInfo->setIsoName($isoName);
-
-        $this->assertSame($this->phoneNumberInfo, $result);
-        $this->assertEquals($isoName, $this->phoneNumberInfo->getIsoName());
-    }
-
-    public function testSubscriberNumberGetterSetter(): void
-    {
-        $subscriberNumber = '13800138000';
-        $result = $this->phoneNumberInfo->setSubscriberNumber($subscriberNumber);
-
-        $this->assertSame($this->phoneNumberInfo, $result);
-        $this->assertEquals($subscriberNumber, $this->phoneNumberInfo->getSubscriberNumber());
-    }
-
-    public function testFullNumberGetterSetter(): void
-    {
-        $fullNumber = '+8613800138000';
-        $result = $this->phoneNumberInfo->setFullNumber($fullNumber);
-
-        $this->assertSame($this->phoneNumberInfo, $result);
-        $this->assertEquals($fullNumber, $this->phoneNumberInfo->getFullNumber());
-    }
-
-    public function testMessageGetterSetter(): void
-    {
-        $message = 'Success';
-        $result = $this->phoneNumberInfo->setMessage($message);
-
-        $this->assertSame($this->phoneNumberInfo, $result);
-        $this->assertEquals($message, $this->phoneNumberInfo->getMessage());
-    }
-
-    public function testCodeGetterSetter(): void
-    {
-        $code = '0';
-        $result = $this->phoneNumberInfo->setCode($code);
-
-        $this->assertSame($this->phoneNumberInfo, $result);
-        $this->assertEquals($code, $this->phoneNumberInfo->getCode());
+        // 验证值设置正确
+        $this->assertSame('13800138000', $entity->getPhoneNumber());
+        $this->assertSame('86', $entity->getNationCode());
+        $this->assertSame('CN', $entity->getIsoCode());
+        $this->assertTrue($entity->isSyncing());
     }
 
     public function testDefaultId(): void
     {
-        $this->assertEquals(0, $this->phoneNumberInfo->getId());
+        $entity = $this->createEntity();
+        $this->assertEquals(0, $entity->getId());
     }
 
     public function testSyncingGetterSetter(): void
     {
-        $this->assertFalse($this->phoneNumberInfo->isSyncing());
+        $entity = $this->createEntity();
+        $this->assertFalse($entity->isSyncing());
 
-        $result = $this->phoneNumberInfo->setSyncing(true);
+        $entity->setSyncing(true);
+        $this->assertTrue($entity->isSyncing());
 
-        $this->assertSame($this->phoneNumberInfo, $result);
-        $this->assertTrue($this->phoneNumberInfo->isSyncing());
-
-        $this->phoneNumberInfo->setSyncing(false);
-        $this->assertFalse($this->phoneNumberInfo->isSyncing());
+        $entity->setSyncing(false);
+        $this->assertFalse($entity->isSyncing());
     }
 
     public function testNeedSyncWhenNationCodeIsNull(): void
     {
-        $this->phoneNumberInfo->setNationCode(null);
-        $this->assertTrue($this->phoneNumberInfo->needSync());
+        $entity = $this->createEntity();
+        $entity->setNationCode(null);
+        $this->assertTrue($entity->needSync());
     }
 
     public function testDoesNotNeedSyncWhenNationCodeExists(): void
     {
-        $this->phoneNumberInfo->setNationCode('86');
-        $this->assertFalse($this->phoneNumberInfo->needSync());
+        $entity = $this->createEntity();
+        $entity->setNationCode('86');
+        $this->assertFalse($entity->needSync());
     }
 
     public function testToString(): void
     {
-        $this->phoneNumberInfo
-            ->setPhoneNumber('13800138000')
-            ->setNationCode('86');
+        $entity = $this->createEntity();
+        $entity->setPhoneNumber('13800138000');
+        $entity->setNationCode('86');
 
-        $this->assertEquals('PhoneInfo[13800138000:86]', (string) $this->phoneNumberInfo);
+        $this->assertEquals('PhoneInfo[13800138000:86]', (string) $entity);
     }
 
     public function testToStringWithNullNationCode(): void
     {
-        $this->phoneNumberInfo
-            ->setPhoneNumber('13800138000')
-            ->setNationCode(null);
+        $entity = $this->createEntity();
+        $entity->setPhoneNumber('13800138000');
+        $entity->setNationCode(null);
 
-        $this->assertEquals('PhoneInfo[13800138000:]', (string) $this->phoneNumberInfo);
+        $this->assertEquals('PhoneInfo[13800138000:]', (string) $entity);
     }
 
-    public function testChainedSetters(): void
+    public function testAllSettersAndGetters(): void
     {
-        $result = $this->phoneNumberInfo
-            ->setPhoneNumber('13800138000')
-            ->setNationCode('86')
-            ->setIsoCode('CN')
-            ->setIsoName('China')
-            ->setSubscriberNumber('13800138000')
-            ->setFullNumber('+8613800138000')
-            ->setMessage('Success')
-            ->setCode('0');
+        $entity = $this->createEntity();
+        $entity->setPhoneNumber('13800138000');
+        $entity->setNationCode('86');
+        $entity->setIsoCode('CN');
+        $entity->setIsoName('China');
+        $entity->setSubscriberNumber('13800138000');
+        $entity->setFullNumber('+8613800138000');
+        $entity->setMessage('Success');
+        $entity->setCode('0');
 
-        $this->assertSame($this->phoneNumberInfo, $result);
-        $this->assertEquals('13800138000', $this->phoneNumberInfo->getPhoneNumber());
-        $this->assertEquals('86', $this->phoneNumberInfo->getNationCode());
-        $this->assertEquals('CN', $this->phoneNumberInfo->getIsoCode());
-        $this->assertEquals('China', $this->phoneNumberInfo->getIsoName());
-        $this->assertEquals('13800138000', $this->phoneNumberInfo->getSubscriberNumber());
-        $this->assertEquals('+8613800138000', $this->phoneNumberInfo->getFullNumber());
-        $this->assertEquals('Success', $this->phoneNumberInfo->getMessage());
-        $this->assertEquals('0', $this->phoneNumberInfo->getCode());
+        $this->assertEquals('13800138000', $entity->getPhoneNumber());
+        $this->assertEquals('86', $entity->getNationCode());
+        $this->assertEquals('CN', $entity->getIsoCode());
+        $this->assertEquals('China', $entity->getIsoName());
+        $this->assertEquals('13800138000', $entity->getSubscriberNumber());
+        $this->assertEquals('+8613800138000', $entity->getFullNumber());
+        $this->assertEquals('Success', $entity->getMessage());
+        $this->assertEquals('0', $entity->getCode());
     }
 
-    protected function setUp(): void
+    public function testCanBeInstantiated(): void
     {
-        $this->phoneNumberInfo = new PhoneNumberInfo();
+        $entity = $this->createEntity();
+        $this->assertNotNull($entity);
+    }
+
+    public function testImplementsStringable(): void
+    {
+        $entity = $this->createEntity();
+        // Test that the string conversion works without error
+        $stringValue = (string) $entity;
+        $this->assertNotEmpty($stringValue);
     }
 }

@@ -3,14 +3,17 @@
 namespace TencentCloudSmsBundle\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
 use TencentCloud\Sms\V20210111\Models\CallbackStatusStatisticsRequest;
 use TencentCloud\Sms\V20210111\Models\SendStatusStatisticsRequest;
 use TencentCloud\Sms\V20210111\Models\SmsPackagesStatisticsRequest;
 use TencentCloudSmsBundle\Entity\Account;
 use TencentCloudSmsBundle\Entity\SmsStatistics;
+use TencentCloudSmsBundle\Exception\JsonEncodingException;
 use TencentCloudSmsBundle\Repository\SmsStatisticsRepository;
 
+#[WithMonologChannel(channel: 'tencent_cloud_sms')]
 class StatisticsSyncService
 {
     public function __construct(
@@ -43,10 +46,12 @@ class StatisticsSyncService
     private function syncHourlyData(\DateTimeImmutable $hour, Account $account): void
     {
         // 查找或创建统计记录
-        $statistics = $this->repository->findByHourAndAccount($hour, $account)
-            ?? (new SmsStatistics())
-                ->setHour($hour)
-                ->setAccount($account);
+        $statistics = $this->repository->findByHourAndAccount($hour, $account);
+        if (null === $statistics) {
+            $statistics = new SmsStatistics();
+            $statistics->setHour($hour);
+            $statistics->setAccount($account);
+        }
 
         // 同步发送数据统计
         $this->syncSendStatistics($statistics, $hour, $account);
@@ -70,24 +75,26 @@ class StatisticsSyncService
         $client = $this->smsClient->create($account);
 
         $req = new SendStatusStatisticsRequest();
-        $req->fromJsonString(json_encode([
+        $jsonString = json_encode([
             'BeginTime' => $beginTime,
             'EndTime' => $endTime,
             'Limit' => 0,
             'Offset' => 0,
             'SmsSdkAppId' => $account->getSecretId(),
-        ]));
+        ]);
+        if (false === $jsonString) {
+            throw new JsonEncodingException('JSON编码失败');
+        }
+        $req->fromJsonString($jsonString);
 
         $resp = $client->SendStatusStatistics($req);
 
         $sendStats = $resp->getSendStatusStatistics();
         $send = $statistics->getSendStatistics();
 
-        $send
-            ->setRequestCount($sendStats->getRequestCount())
-            ->setRequestSuccessCount($sendStats->getRequestSuccessCount())
-            // ->setRequestFailCount($sendStats->getRequestFailCount()) // 方法可能不存在
-            ;
+        $send->setRequestCount($sendStats->getRequestCount());
+        $send->setRequestSuccessCount($sendStats->getRequestSuccessCount());
+        // $send->setRequestFailCount($sendStats->getRequestFailCount()); // 方法可能不存在
     }
 
     private function syncCallbackStatistics(SmsStatistics $statistics, \DateTimeImmutable $hour, Account $account): void
@@ -98,28 +105,31 @@ class StatisticsSyncService
         $client = $this->smsClient->create($account);
 
         $req = new CallbackStatusStatisticsRequest();
-        $req->fromJsonString(json_encode([
+        $jsonString = json_encode([
             'BeginTime' => $beginTime,
             'EndTime' => $endTime,
             'Limit' => 0,
             'Offset' => 0,
             'SmsSdkAppId' => $account->getSecretId(),
-        ]));
+        ]);
+        if (false === $jsonString) {
+            throw new JsonEncodingException('JSON编码失败');
+        }
+        $req->fromJsonString($jsonString);
 
         $resp = $client->CallbackStatusStatistics($req);
 
         $callbackStats = $resp->getCallbackStatusStatistics();
         $callback = $statistics->getCallbackStatistics();
 
-        $callback
-            ->setCallbackCount($callbackStats->getCallbackCount())
-            ->setCallbackSuccessCount($callbackStats->getCallbackSuccessCount())
-            ->setCallbackFailCount($callbackStats->getCallbackFailCount())
-            ->setInternalErrorCount($callbackStats->getInternalErrorCount())
-            ->setInvalidNumberCount($callbackStats->getInvalidNumberCount())
-            ->setShutdownErrorCount($callbackStats->getShutdownErrorCount())
-            ->setBlackListCount($callbackStats->getBlackListCount())
-            ->setFrequencyLimitCount($callbackStats->getFrequencyLimitCount());
+        $callback->setCallbackCount($callbackStats->getCallbackCount());
+        $callback->setCallbackSuccessCount($callbackStats->getCallbackSuccessCount());
+        $callback->setCallbackFailCount($callbackStats->getCallbackFailCount());
+        $callback->setInternalErrorCount($callbackStats->getInternalErrorCount());
+        $callback->setInvalidNumberCount($callbackStats->getInvalidNumberCount());
+        $callback->setShutdownErrorCount($callbackStats->getShutdownErrorCount());
+        $callback->setBlackListCount($callbackStats->getBlackListCount());
+        $callback->setFrequencyLimitCount($callbackStats->getFrequencyLimitCount());
     }
 
     private function syncPackageStatistics(SmsStatistics $statistics, \DateTimeImmutable $hour, Account $account): void
@@ -130,21 +140,51 @@ class StatisticsSyncService
         $client = $this->smsClient->create($account);
 
         $req = new SmsPackagesStatisticsRequest();
-        $req->fromJsonString(json_encode([
+        $jsonString = json_encode([
             'BeginTime' => $beginTime,
             'EndTime' => $endTime,
             'Limit' => 0,
             'Offset' => 0,
             'SmsSdkAppId' => $account->getSecretId(),
-        ]));
+        ]);
+        if (false === $jsonString) {
+            throw new JsonEncodingException('JSON编码失败');
+        }
+        $req->fromJsonString($jsonString);
 
         $resp = $client->SmsPackagesStatistics($req);
-        
-        // $packageStats = $resp->getSmsPackagesStatistics(); // 方法可能不存在
+        $packageStatsSet = $resp->getSmsPackagesStatisticsSet();
+
+        $this->updatePackageStatistics($statistics, $packageStatsSet);
+    }
+
+    /**
+     * @param mixed $packageStatsSet
+     */
+    private function updatePackageStatistics(SmsStatistics $statistics, $packageStatsSet): void
+    {
+        if (!is_array($packageStatsSet) || [] === $packageStatsSet) {
+            return;
+        }
+
+        $packageStats = $packageStatsSet[0];
+        if (
+            !is_object($packageStats)
+            || !method_exists($packageStats, 'getPackageAmount')
+            || !method_exists($packageStats, 'getCurrentUsage')
+        ) {
+            return;
+        }
+
         $package = $statistics->getPackageStatistics();
-        
-        // $package
-        //     ->setPackageAmount($packageStats->getPackageAmount())
-        //     ->setUsedAmount($packageStats->getUsedAmount());
+        $packageAmount = $packageStats->getPackageAmount();
+        $currentUsage = $packageStats->getCurrentUsage();
+
+        if (is_int($packageAmount)) {
+            $package->setPackageAmount($packageAmount);
+        }
+        if (is_int($currentUsage)) {
+            $package->setUsedAmount($currentUsage);
+        }
     }
 }

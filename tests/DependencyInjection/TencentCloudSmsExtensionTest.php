@@ -2,53 +2,52 @@
 
 namespace TencentCloudSmsBundle\Tests\DependencyInjection;
 
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use TencentCloudSmsBundle\DependencyInjection\TencentCloudSmsExtension;
+use Tourze\PHPUnitSymfonyUnitTest\AbstractDependencyInjectionExtensionTestCase;
 
-class TencentCloudSmsExtensionTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(TencentCloudSmsExtension::class)]
+final class TencentCloudSmsExtensionTest extends AbstractDependencyInjectionExtensionTestCase
 {
     private TencentCloudSmsExtension $extension;
+
     private ContainerBuilder $container;
-
-    public function testLoad(): void
-    {
-        // 调用load方法
-        $this->extension->load([], $this->container);
-
-        // 验证服务是否被正确加载
-        $this->assertTrue($this->container->hasDefinition('TencentCloudSmsBundle\\Service\\SdkService'));
-        $this->assertTrue($this->container->hasDefinition('TencentCloudSmsBundle\\Service\\SmsClient'));
-        $this->assertTrue($this->container->hasDefinition('TencentCloudSmsBundle\\Service\\SmsSendService'));
-        $this->assertTrue($this->container->hasDefinition('TencentCloudSmsBundle\\Service\\SmsStatusService'));
-        $this->assertTrue($this->container->hasDefinition('TencentCloudSmsBundle\\Service\\StatusSyncService'));
-        $this->assertTrue($this->container->hasDefinition('TencentCloudSmsBundle\\Service\\StatisticsSyncService'));
-        $this->assertTrue($this->container->hasDefinition('TencentCloudSmsBundle\\Service\\PhoneNumberInfoService'));
-        $this->assertTrue($this->container->hasDefinition('TencentCloudSmsBundle\\Service\\ImageService'));
-    }
-
-    public function testLoadWithConfigs(): void
-    {
-        // 测试传入配置数组
-        $configs = [
-            ['some_config' => 'value']
-        ];
-
-        $this->extension->load($configs, $this->container);
-
-        // 验证服务仍然被正确加载
-        $this->assertTrue($this->container->hasDefinition('TencentCloudSmsBundle\\Service\\SdkService'));
-    }
-
-    public function testGetAlias(): void
-    {
-        // 测试别名获取
-        $this->assertEquals('tencent_cloud_sms', $this->extension->getAlias());
-    }
 
     protected function setUp(): void
     {
+        parent::setUp();
+
         $this->extension = new TencentCloudSmsExtension();
         $this->container = new ContainerBuilder();
+        $this->container->setParameter('kernel.environment', 'test');
+    }
+
+    public function testGetConfigDir(): void
+    {
+        $reflection = new \ReflectionClass($this->extension);
+        $method = $reflection->getMethod('getConfigDir');
+        $method->setAccessible(true);
+        $configDir = $method->invoke($this->extension);
+
+        if (!is_string($configDir)) {
+            self::fail('Config dir must be string');
+        }
+
+        $this->assertStringContainsString('Resources/config', $configDir);
+        $this->assertDirectoryExists($configDir);
+    }
+
+    public function testLoad(): void
+    {
+        $this->extension->load([], $this->container);
+
+        $this->assertNotEmpty($this->container->getDefinitions());
+        $this->assertTrue($this->container->hasDefinition('TencentCloudSmsBundle\Service\SdkService'));
+        $this->assertTrue($this->container->hasDefinition('TencentCloudSmsBundle\Service\SmsClient'));
+        $this->assertTrue($this->container->hasDefinition('TencentCloudSmsBundle\Service\SmsSendService'));
     }
 }

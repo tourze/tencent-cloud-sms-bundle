@@ -4,9 +4,9 @@ namespace TencentCloudSmsBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 use TencentCloudSmsBundle\Enum\SendStatus;
 use TencentCloudSmsBundle\Repository\SmsRecipientRepository;
-use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 
 #[ORM\Table(name: 'tencent_cloud_sms_recipient', options: ['comment' => '短信接收人'])]
@@ -14,49 +14,61 @@ use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 class SmsRecipient implements \Stringable
 {
     use TimestampableAware;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
-    private ?int $id = 0;
+    private int $id = 0;
 
-    #[IndexColumn]
-    #[ORM\ManyToOne(targetEntity: SmsMessage::class, inversedBy: 'recipients')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull(message: '短信消息不能为空')]
+    #[ORM\ManyToOne(targetEntity: SmsMessage::class, inversedBy: 'recipients', cascade: ['persist'])]
+    #[ORM\JoinColumn(nullable: true)]
     private ?SmsMessage $message = null;
 
-    #[IndexColumn]
-    #[ORM\ManyToOne(targetEntity: PhoneNumberInfo::class)]
-    #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull(message: '手机号信息不能为空')]
+    #[ORM\ManyToOne(targetEntity: PhoneNumberInfo::class, cascade: ['persist'])]
+    #[ORM\JoinColumn(nullable: true)]
     private ?PhoneNumberInfo $phoneNumber = null;
 
-    #[ORM\Column(type: Types::STRING, enumType: SendStatus::class, options: ['comment' => '发送状态'])]
+    #[Assert\Choice(callback: [SendStatus::class, 'cases'])]
+    #[ORM\Column(type: Types::STRING, enumType: SendStatus::class, nullable: true, options: ['comment' => '发送状态'])]
     private ?SendStatus $status = null;
 
+    #[Assert\Length(max: 50)]
     #[ORM\Column(length: 50, nullable: true, options: ['comment' => '腾讯云返回的序列号'])]
     private ?string $serialNo = null;
 
+    #[Assert\Type(type: 'int')]
+    #[Assert\PositiveOrZero]
     #[ORM\Column(length: 50, nullable: true, options: ['comment' => '计费条数'])]
     private ?int $fee = null;
 
+    #[Assert\Length(max: 50)]
     #[ORM\Column(length: 50, nullable: true, options: ['comment' => '腾讯云状态码'])]
     private ?string $code = null;
 
+    #[Assert\Length(max: 65535)]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '腾讯云返回消息'])]
     private ?string $statusMessage = null;
 
+    #[Assert\Type(type: '\DateTimeImmutable')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '发送时间'])]
     private ?\DateTimeImmutable $sendTime = null;
 
+    #[Assert\Type(type: '\DateTimeImmutable')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '接收时间'])]
     private ?\DateTimeImmutable $receiveTime = null;
 
+    #[Assert\Type(type: '\DateTimeImmutable')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '状态更新时间'])]
     private ?\DateTimeImmutable $statusTime = null;
 
+    /** @var array<string, mixed>|null */
+    #[Assert\Type(type: 'array')]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '腾讯云原始响应'])]
     private ?array $rawResponse = null;
 
-    public function getId(): ?int
+    public function getId(): int
     {
         return $this->id;
     }
@@ -66,10 +78,9 @@ class SmsRecipient implements \Stringable
         return $this->message;
     }
 
-    public function setMessage(?SmsMessage $message): static
+    public function setMessage(?SmsMessage $message): void
     {
         $this->message = $message;
-        return $this;
     }
 
     public function getPhoneNumber(): ?PhoneNumberInfo
@@ -77,10 +88,9 @@ class SmsRecipient implements \Stringable
         return $this->phoneNumber;
     }
 
-    public function setPhoneNumber(?PhoneNumberInfo $phoneNumber): static
+    public function setPhoneNumber(?PhoneNumberInfo $phoneNumber): void
     {
         $this->phoneNumber = $phoneNumber;
-        return $this;
     }
 
     public function getStatus(): ?SendStatus
@@ -88,10 +98,9 @@ class SmsRecipient implements \Stringable
         return $this->status;
     }
 
-    public function setStatus(?SendStatus $status): static
+    public function setStatus(?SendStatus $status): void
     {
         $this->status = $status;
-        return $this;
     }
 
     public function getSerialNo(): ?string
@@ -99,10 +108,9 @@ class SmsRecipient implements \Stringable
         return $this->serialNo;
     }
 
-    public function setSerialNo(?string $serialNo): static
+    public function setSerialNo(?string $serialNo): void
     {
         $this->serialNo = $serialNo;
-        return $this;
     }
 
     public function getFee(): ?int
@@ -110,10 +118,9 @@ class SmsRecipient implements \Stringable
         return $this->fee;
     }
 
-    public function setFee(?int $fee): static
+    public function setFee(?int $fee): void
     {
         $this->fee = $fee;
-        return $this;
     }
 
     public function getCode(): ?string
@@ -121,10 +128,9 @@ class SmsRecipient implements \Stringable
         return $this->code;
     }
 
-    public function setCode(?string $code): static
+    public function setCode(?string $code): void
     {
         $this->code = $code;
-        return $this;
     }
 
     public function getStatusMessage(): ?string
@@ -132,10 +138,9 @@ class SmsRecipient implements \Stringable
         return $this->statusMessage;
     }
 
-    public function setStatusMessage(?string $statusMessage): static
+    public function setStatusMessage(?string $statusMessage): void
     {
         $this->statusMessage = $statusMessage;
-        return $this;
     }
 
     public function getSendTime(): ?\DateTimeImmutable
@@ -143,10 +148,9 @@ class SmsRecipient implements \Stringable
         return $this->sendTime;
     }
 
-    public function setSendTime(?\DateTimeImmutable $sendTime): static
+    public function setSendTime(?\DateTimeImmutable $sendTime): void
     {
         $this->sendTime = $sendTime;
-        return $this;
     }
 
     public function getReceiveTime(): ?\DateTimeImmutable
@@ -154,10 +158,9 @@ class SmsRecipient implements \Stringable
         return $this->receiveTime;
     }
 
-    public function setReceiveTime(?\DateTimeImmutable $receiveTime): static
+    public function setReceiveTime(?\DateTimeImmutable $receiveTime): void
     {
         $this->receiveTime = $receiveTime;
-        return $this;
     }
 
     public function getStatusTime(): ?\DateTimeImmutable
@@ -165,25 +168,25 @@ class SmsRecipient implements \Stringable
         return $this->statusTime;
     }
 
-    public function setStatusTime(?\DateTimeImmutable $statusTime): static
+    public function setStatusTime(?\DateTimeImmutable $statusTime): void
     {
         $this->statusTime = $statusTime;
-        return $this;
     }
 
+    /** @return array<string, mixed>|null */
     public function getRawResponse(): ?array
     {
         return $this->rawResponse;
     }
 
-    public function setRawResponse(?array $rawResponse): static
+    /** @param array<string, mixed>|null $rawResponse */
+    public function setRawResponse(?array $rawResponse): void
     {
         $this->rawResponse = $rawResponse;
-        return $this;
     }
 
     public function __toString(): string
     {
-        return $this->phoneNumber !== null ? (string) $this->phoneNumber : '';
+        return null !== $this->phoneNumber ? (string) $this->phoneNumber : '';
     }
 }

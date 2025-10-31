@@ -2,10 +2,9 @@
 
 namespace TencentCloudSmsBundle\Entity;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 use TencentCloudSmsBundle\Enum\TemplateReviewStatus;
 use TencentCloudSmsBundle\Enum\TemplateType;
 use TencentCloudSmsBundle\Repository\SmsTemplateRepository;
@@ -18,58 +17,72 @@ use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
 class SmsTemplate implements \Stringable
 {
     use TimestampableAware;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
-    private ?int $id = 0;
+    private int $id = 0;
 
-    #[ORM\ManyToOne(targetEntity: Account::class)]
+    #[ORM\ManyToOne(targetEntity: Account::class, cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: false)]
     private ?Account $account = null;
 
+    #[Assert\Length(max: 20)]
     #[ORM\Column(length: 20, unique: true, options: ['comment' => '模板ID'])]
     private ?string $templateId = null;
 
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 100)]
     #[ORM\Column(type: Types::STRING, length: 100, options: ['comment' => '模板名称'])]
     private ?string $templateName = null;
 
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 65535)]
     #[ORM\Column(type: Types::TEXT, options: ['comment' => '模板内容'])]
     private ?string $templateContent = null;
 
-    #[ORM\Column(type: Types::STRING, enumType: TemplateReviewStatus::class, options: ['comment' => '模板状态'])]
+    #[Assert\Choice(callback: [TemplateReviewStatus::class, 'cases'])]
+    #[ORM\Column(type: Types::INTEGER, enumType: TemplateReviewStatus::class, options: ['comment' => '模板状态'])]
     private ?TemplateReviewStatus $templateStatus = null;
 
+    #[Assert\Length(max: 65535)]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '审核回复'])]
     private ?string $reviewReply = null;
 
-    #[ORM\Column(type: Types::STRING, enumType: TemplateType::class, options: ['comment' => '模板类型'])]
+    #[Assert\Choice(callback: [TemplateType::class, 'cases'])]
+    #[ORM\Column(type: Types::INTEGER, enumType: TemplateType::class, options: ['comment' => '模板类型'])]
     private ?TemplateType $templateType = null;
 
+    /**
+     * @var array<string, mixed> 模板参数列表
+     */
+    #[Assert\Type(type: 'array')]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '模板参数列表'])]
     private array $templateParams = [];
 
+    #[Assert\Type(type: 'bool')]
     #[ORM\Column(type: Types::BOOLEAN, options: ['comment' => '是否国际/港澳台短信'])]
     private bool $international = false;
 
+    #[Assert\Length(max: 65535)]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '模板备注说明'])]
     private ?string $remark = null;
 
-    #[ORM\OneToMany(mappedBy: 'template', targetEntity: SmsMessage::class)]
-    private Collection $messages;
-
+    #[Assert\Type(type: 'bool')]
     #[IndexColumn]
     #[TrackColumn]
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '有效', 'default' => 0])]
     private ?bool $valid = false;
 
+    #[Assert\Type(type: 'bool')]
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false, 'comment' => '是否正在同步'])]
     private bool $syncing = false;
 
     public function __construct()
     {
-        $this->messages = new ArrayCollection();
     }
 
-    public function getId(): ?int
+    public function getId(): int
     {
         return $this->id;
     }
@@ -79,10 +92,9 @@ class SmsTemplate implements \Stringable
         return $this->syncing;
     }
 
-    public function setSyncing(bool $syncing): static
+    public function setSyncing(bool $syncing): void
     {
         $this->syncing = $syncing;
-        return $this;
     }
 
     public function getAccount(): ?Account
@@ -90,10 +102,9 @@ class SmsTemplate implements \Stringable
         return $this->account;
     }
 
-    public function setAccount(?Account $account): static
+    public function setAccount(?Account $account): void
     {
         $this->account = $account;
-        return $this;
     }
 
     public function getTemplateId(): ?string
@@ -101,10 +112,9 @@ class SmsTemplate implements \Stringable
         return $this->templateId;
     }
 
-    public function setTemplateId(?string $templateId): static
+    public function setTemplateId(?string $templateId): void
     {
         $this->templateId = $templateId;
-        return $this;
     }
 
     public function getTemplateName(): ?string
@@ -112,10 +122,9 @@ class SmsTemplate implements \Stringable
         return $this->templateName;
     }
 
-    public function setTemplateName(?string $templateName): static
+    public function setTemplateName(?string $templateName): void
     {
         $this->templateName = $templateName;
-        return $this;
     }
 
     public function getTemplateContent(): ?string
@@ -123,10 +132,9 @@ class SmsTemplate implements \Stringable
         return $this->templateContent;
     }
 
-    public function setTemplateContent(?string $templateContent): static
+    public function setTemplateContent(?string $templateContent): void
     {
         $this->templateContent = $templateContent;
-        return $this;
     }
 
     public function getTemplateStatus(): ?TemplateReviewStatus
@@ -134,10 +142,9 @@ class SmsTemplate implements \Stringable
         return $this->templateStatus;
     }
 
-    public function setTemplateStatus(?TemplateReviewStatus $templateStatus): static
+    public function setTemplateStatus(?TemplateReviewStatus $templateStatus): void
     {
         $this->templateStatus = $templateStatus;
-        return $this;
     }
 
     public function getReviewReply(): ?string
@@ -145,10 +152,9 @@ class SmsTemplate implements \Stringable
         return $this->reviewReply;
     }
 
-    public function setReviewReply(?string $reviewReply): static
+    public function setReviewReply(?string $reviewReply): void
     {
         $this->reviewReply = $reviewReply;
-        return $this;
     }
 
     public function getTemplateType(): ?TemplateType
@@ -156,21 +162,25 @@ class SmsTemplate implements \Stringable
         return $this->templateType;
     }
 
-    public function setTemplateType(?TemplateType $templateType): static
+    public function setTemplateType(?TemplateType $templateType): void
     {
         $this->templateType = $templateType;
-        return $this;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getTemplateParams(): array
     {
         return $this->templateParams;
     }
 
-    public function setTemplateParams(array $templateParams): static
+    /**
+     * @param array<string, mixed> $templateParams
+     */
+    public function setTemplateParams(array $templateParams): void
     {
         $this->templateParams = $templateParams;
-        return $this;
     }
 
     public function isInternational(): bool
@@ -178,10 +188,9 @@ class SmsTemplate implements \Stringable
         return $this->international;
     }
 
-    public function setInternational(bool $international): static
+    public function setInternational(bool $international): void
     {
         $this->international = $international;
-        return $this;
     }
 
     public function getRemark(): ?string
@@ -189,37 +198,9 @@ class SmsTemplate implements \Stringable
         return $this->remark;
     }
 
-    public function setRemark(?string $remark): static
+    public function setRemark(?string $remark): void
     {
         $this->remark = $remark;
-        return $this;
-    }
-
-    public function getMessages(): Collection
-    {
-        return $this->messages;
-    }
-
-    public function addMessage(SmsMessage $message): static
-    {
-        if (!$this->messages->contains($message)) {
-            $this->messages->add($message);
-            $message->setTemplate($this->templateId ?? '');
-        }
-
-        return $this;
-    }
-
-    public function removeMessage(SmsMessage $message): static
-    {
-        if ($this->messages->removeElement($message)) {
-            // set the owning side to null (unless already changed)
-            if ($message->getTemplate() === ($this->templateId ?? '')) {
-                $message->setTemplate('');
-            }
-        }
-
-        return $this;
     }
 
     public function isValid(): ?bool
@@ -227,11 +208,9 @@ class SmsTemplate implements \Stringable
         return $this->valid;
     }
 
-    public function setValid(?bool $valid): self
+    public function setValid(?bool $valid): void
     {
         $this->valid = $valid;
-
-        return $this;
     }
 
     public function __toString(): string

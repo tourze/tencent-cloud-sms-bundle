@@ -4,56 +4,69 @@ namespace TencentCloudSmsBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Stringable;
+use Symfony\Component\Validator\Constraints as Assert;
 use TencentCloudSmsBundle\Repository\PhoneNumberInfoRepository;
 use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 
 #[ORM\Table(name: 'tencent_cloud_sms_phone_number_info', options: ['comment' => '手机号码信息'])]
 #[ORM\Entity(repositoryClass: PhoneNumberInfoRepository::class)]
-class PhoneNumberInfo implements Stringable
+class PhoneNumberInfo implements \Stringable
 {
     use TimestampableAware;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
-    private ?int $id = 0;
+    private int $id = 0;
 
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 20)]
+    #[Assert\Regex(pattern: '/^\+?[1-9]\d{1,14}$/', message: 'Invalid phone number format')]
     #[ORM\Column(length: 20, unique: true, options: ['comment' => '手机号码'])]
     private string $phoneNumber;
 
+    #[Assert\Length(max: 20)]
     #[IndexColumn]
     #[ORM\Column(length: 20, nullable: true, options: ['comment' => '国家码'])]
     private ?string $nationCode = null;
 
+    #[Assert\Length(max: 20)]
     #[ORM\Column(length: 20, nullable: true, options: ['comment' => '国家/地区ISO编码'])]
     private ?string $isoCode = null;
 
+    #[Assert\Length(max: 50)]
     #[ORM\Column(length: 50, nullable: true, options: ['comment' => '国家/地区名称'])]
     private ?string $isoName = null;
 
+    #[Assert\Length(max: 20)]
     #[ORM\Column(length: 20, nullable: true, options: ['comment' => '用户号码'])]
     private ?string $subscriberNumber = null;
 
+    #[Assert\Length(max: 20)]
     #[ORM\Column(length: 20, nullable: true, options: ['comment' => '完整号码'])]
     private ?string $fullNumber = null;
 
+    #[Assert\Length(max: 65535)]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '查询结果'])]
     private ?string $message = null;
 
+    #[Assert\Length(max: 20)]
     #[ORM\Column(length: 20, nullable: true, options: ['comment' => '查询状态码'])]
     private ?string $code = null;
 
+    #[Assert\Type(type: 'bool')]
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false, 'comment' => '是否正在同步'])]
     private bool $syncing = false;
 
-    public function getId(): ?int
+    public function getId(): int
     {
         return $this->id;
     }
 
     public function needSync(): bool
     {
-        return $this->nationCode === null;
+        return null === $this->nationCode;
     }
 
     public function isSyncing(): bool
@@ -61,10 +74,9 @@ class PhoneNumberInfo implements Stringable
         return $this->syncing;
     }
 
-    public function setSyncing(bool $syncing): static
+    public function setSyncing(bool $syncing): void
     {
         $this->syncing = $syncing;
-        return $this;
     }
 
     public function getPhoneNumber(): string
@@ -72,10 +84,9 @@ class PhoneNumberInfo implements Stringable
         return $this->phoneNumber;
     }
 
-    public function setPhoneNumber(string $phoneNumber): static
+    public function setPhoneNumber(string $phoneNumber): void
     {
         $this->phoneNumber = $phoneNumber;
-        return $this;
     }
 
     public function getNationCode(): ?string
@@ -83,10 +94,9 @@ class PhoneNumberInfo implements Stringable
         return $this->nationCode;
     }
 
-    public function setNationCode(?string $nationCode): static
+    public function setNationCode(?string $nationCode): void
     {
         $this->nationCode = $nationCode;
-        return $this;
     }
 
     public function getIsoCode(): ?string
@@ -94,10 +104,9 @@ class PhoneNumberInfo implements Stringable
         return $this->isoCode;
     }
 
-    public function setIsoCode(?string $isoCode): static
+    public function setIsoCode(?string $isoCode): void
     {
         $this->isoCode = $isoCode;
-        return $this;
     }
 
     public function getIsoName(): ?string
@@ -105,10 +114,9 @@ class PhoneNumberInfo implements Stringable
         return $this->isoName;
     }
 
-    public function setIsoName(?string $isoName): static
+    public function setIsoName(?string $isoName): void
     {
         $this->isoName = $isoName;
-        return $this;
     }
 
     public function getSubscriberNumber(): ?string
@@ -116,10 +124,9 @@ class PhoneNumberInfo implements Stringable
         return $this->subscriberNumber;
     }
 
-    public function setSubscriberNumber(?string $subscriberNumber): static
+    public function setSubscriberNumber(?string $subscriberNumber): void
     {
         $this->subscriberNumber = $subscriberNumber;
-        return $this;
     }
 
     public function getFullNumber(): ?string
@@ -127,10 +134,9 @@ class PhoneNumberInfo implements Stringable
         return $this->fullNumber;
     }
 
-    public function setFullNumber(?string $fullNumber): static
+    public function setFullNumber(?string $fullNumber): void
     {
         $this->fullNumber = $fullNumber;
-        return $this;
     }
 
     public function getMessage(): ?string
@@ -138,10 +144,9 @@ class PhoneNumberInfo implements Stringable
         return $this->message;
     }
 
-    public function setMessage(?string $message): static
+    public function setMessage(?string $message): void
     {
         $this->message = $message;
-        return $this;
     }
 
     public function getCode(): ?string
@@ -149,10 +154,9 @@ class PhoneNumberInfo implements Stringable
         return $this->code;
     }
 
-    public function setCode(?string $code): static
+    public function setCode(?string $code): void
     {
         $this->code = $code;
-        return $this;
     }
 
     public function __toString(): string

@@ -2,13 +2,14 @@
 
 namespace TencentCloudSmsBundle\Enum;
 
+use Tourze\EnumExtra\BadgeInterface;
 use Tourze\EnumExtra\Itemable;
 use Tourze\EnumExtra\ItemTrait;
 use Tourze\EnumExtra\Labelable;
 use Tourze\EnumExtra\Selectable;
 use Tourze\EnumExtra\SelectTrait;
 
-enum DocumentType: int implements Labelable, Itemable, Selectable
+enum DocumentType: int implements Labelable, Itemable, Selectable, BadgeInterface
 {
     use ItemTrait;
     use SelectTrait;
@@ -36,5 +37,10 @@ enum DocumentType: int implements Labelable, Itemable, Selectable
             self::TRADEMARK => '商标注册书',
             self::WECHAT_ADMIN => '公众号设置页面截图',
         };
+    }
+
+    public function getBadge(): string
+    {
+        return $this->getLabel();
     }
 }

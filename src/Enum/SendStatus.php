@@ -2,13 +2,14 @@
 
 namespace TencentCloudSmsBundle\Enum;
 
+use Tourze\EnumExtra\BadgeInterface;
 use Tourze\EnumExtra\Itemable;
 use Tourze\EnumExtra\ItemTrait;
 use Tourze\EnumExtra\Labelable;
 use Tourze\EnumExtra\Selectable;
 use Tourze\EnumExtra\SelectTrait;
 
-enum SendStatus: string implements Labelable, Itemable, Selectable
+enum SendStatus: string implements Labelable, Itemable, Selectable, BadgeInterface
 {
     use ItemTrait;
     use SelectTrait;
@@ -28,5 +29,10 @@ enum SendStatus: string implements Labelable, Itemable, Selectable
             self::PHONE_NUMBER_LIMIT => '免打扰名单',
             self::INSUFFICIENT_PACKAGE => '余量不足',
         };
+    }
+
+    public function getBadge(): string
+    {
+        return $this->getLabel();
     }
 }

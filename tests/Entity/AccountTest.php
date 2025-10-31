@@ -2,114 +2,68 @@
 
 namespace TencentCloudSmsBundle\Tests\Entity;
 
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
 use TencentCloudSmsBundle\Entity\Account;
+use Tourze\PHPUnitDoctrineEntity\AbstractEntityTestCase;
 
-class AccountTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(Account::class)]
+final class AccountTest extends AbstractEntityTestCase
 {
-    private Account $account;
-
-    protected function setUp(): void
+    /**
+     * 创建被测实体的一个实例.
+     */
+    protected function createEntity(): Account
     {
-        $this->account = new Account();
+        return new Account();
     }
 
-    public function testIdGetterSetter(): void
+    /**
+     * 提供属性及其样本值的 Data Provider.
+     *
+     * @return iterable<string, array{0: string, 1: mixed}>
+     */
+    public static function propertiesProvider(): iterable
     {
-        // ID通常由Doctrine生成，这里测试getter方法
-        $this->assertEquals(0, $this->account->getId());
+        return [
+            'name' => ['name', '测试账号名称'],
+            'secretId' => ['secretId', 'test-secret-id-12345'],
+            'secretKey' => ['secretKey', 'test-secret-key-abcdef'],
+            'valid' => ['valid', true],
+            'createdBy' => ['createdBy', 'test-user'],
+            'updatedBy' => ['updatedBy', 'another-user'],
+            'createTime' => ['createTime', new \DateTimeImmutable()],
+            'updateTime' => ['updateTime', new \DateTimeImmutable()],
+        ];
     }
 
-    public function testNameGetterSetter(): void
+    public function testSettersWork(): void
     {
-        $name = '测试账号名称';
-        $this->account->setName($name);
-        $this->assertEquals($name, $this->account->getName());
-    }
+        // 测试setter方法功能正常
+        $entity = $this->createEntity();
+        $entity->setName('测试账号');
+        $entity->setSecretId('test-id');
+        $entity->setSecretKey('test-key');
+        $entity->setValid(true);
 
-    public function testSecretIdGetterSetter(): void
-    {
-        $secretId = 'test-secret-id-12345';
-        $this->account->setSecretId($secretId);
-        $this->assertEquals($secretId, $this->account->getSecretId());
-    }
-
-    public function testSecretKeyGetterSetter(): void
-    {
-        $secretKey = 'test-secret-key-abcdef';
-        $this->account->setSecretKey($secretKey);
-        $this->assertEquals($secretKey, $this->account->getSecretKey());
-    }
-
-    public function testValidGetterSetter(): void
-    {
-        // 默认值应为false
-        $this->assertFalse($this->account->isValid());
-
-        // 设置为true
-        $this->account->setValid(true);
-        $this->assertTrue($this->account->isValid());
-
-        // 设置为false
-        $this->account->setValid(false);
-        $this->assertFalse($this->account->isValid());
-
-        // 设置为null
-        $this->account->setValid(null);
-        $this->assertNull($this->account->isValid());
-    }
-
-    public function testCreatedByGetterSetter(): void
-    {
-        $createdBy = 'test-user';
-        $this->account->setCreatedBy($createdBy);
-        $this->assertEquals($createdBy, $this->account->getCreatedBy());
-    }
-
-    public function testUpdatedByGetterSetter(): void
-    {
-        $updatedBy = 'another-user';
-        $this->account->setUpdatedBy($updatedBy);
-        $this->assertEquals($updatedBy, $this->account->getUpdatedBy());
-    }
-
-    public function testCreateTimeGetterSetter(): void
-    {
-        $now = new \DateTimeImmutable();
-        $this->account->setCreateTime($now);
-        $this->assertSame($now, $this->account->getCreateTime());
-    }
-
-    public function testUpdateTimeGetterSetter(): void
-    {
-        $now = new \DateTimeImmutable();
-        $this->account->setUpdateTime($now);
-        $this->assertSame($now, $this->account->getUpdateTime());
-    }
-
-    public function testFluidInterface(): void
-    {
-        // 测试流式接口（链式调用）
-        $result = $this->account
-            ->setName('测试账号')
-            ->setSecretId('test-id')
-            ->setSecretKey('test-key')
-            ->setValid(true);
-
-        // 验证返回值是否为当前对象实例
-        $this->assertSame($this->account, $result);
+        // 验证值设置正确
+        $this->assertSame('测试账号', $entity->getName());
+        $this->assertSame('test-id', $entity->getSecretId());
+        $this->assertSame('test-key', $entity->getSecretKey());
+        $this->assertTrue($entity->isValid());
     }
 
     public function testCanBeInstantiated(): void
     {
-        $account = new Account();
-        $this->assertInstanceOf(Account::class, $account);
+        $account = $this->createEntity();
+        $this->assertNotNull($account);
     }
 
     public function testImplementsStringable(): void
     {
-        $account = new Account();
-        $this->assertInstanceOf(\Stringable::class, $account);
+        $account = $this->createEntity();
         // Test that the string conversion works without error
         $stringValue = (string) $account;
         $this->assertNotEmpty($stringValue);
@@ -117,18 +71,25 @@ class AccountTest extends TestCase
 
     public function testDefaultValues(): void
     {
-        $account = new Account();
+        $account = $this->createEntity();
         $this->assertEquals(0, $account->getId());
         $this->assertFalse($account->isValid());
     }
 
-    public function testSettersReturnSelf(): void
+    public function testSettersReturnVoid(): void
     {
-        $account = new Account();
+        $account = $this->createEntity();
 
-        $this->assertSame($account, $account->setName('test'));
-        $this->assertSame($account, $account->setSecretId('test-id'));
-        $this->assertSame($account, $account->setSecretKey('test-key'));
-        $this->assertSame($account, $account->setValid(true));
+        // void方法不应返回值，这里测试setter方法可以正常调用
+        $account->setName('test');
+        $account->setSecretId('test-id');
+        $account->setSecretKey('test-key');
+        $account->setValid(true);
+
+        // 验证值被正确设置
+        $this->assertSame('test', $account->getName());
+        $this->assertSame('test-id', $account->getSecretId());
+        $this->assertSame('test-key', $account->getSecretKey());
+        $this->assertTrue($account->isValid());
     }
 }

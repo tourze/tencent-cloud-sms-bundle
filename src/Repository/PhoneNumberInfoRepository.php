@@ -5,13 +5,12 @@ namespace TencentCloudSmsBundle\Repository;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use TencentCloudSmsBundle\Entity\PhoneNumberInfo;
+use Tourze\PHPUnitSymfonyKernelTest\Attribute\AsRepository;
 
 /**
- * @method PhoneNumberInfo|null find($id, $lockMode = null, $lockVersion = null)
- * @method PhoneNumberInfo|null findOneBy(array $criteria, array $orderBy = null)
- * @method PhoneNumberInfo[] findAll()
- * @method PhoneNumberInfo[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @extends ServiceEntityRepository<PhoneNumberInfo>
  */
+#[AsRepository(entityClass: PhoneNumberInfo::class)]
 class PhoneNumberInfoRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -19,12 +18,31 @@ class PhoneNumberInfoRepository extends ServiceEntityRepository
         parent::__construct($registry, PhoneNumberInfo::class);
     }
 
-    public function findByPhoneNumber(string $phoneNumber, ?string $countryCode = null): ?PhoneNumberInfo
+    public function findByPhoneNumber(string $phoneNumber, ?string $nationCode = null): ?PhoneNumberInfo
     {
         $criteria = ['phoneNumber' => $phoneNumber];
-        if ($countryCode !== null) {
-            $criteria['countryCode'] = $countryCode;
+        if (null !== $nationCode) {
+            $criteria['nationCode'] = $nationCode;
         }
+
         return $this->findOneBy($criteria);
+    }
+
+    public function save(PhoneNumberInfo $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->persist($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    public function remove(PhoneNumberInfo $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->remove($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
     }
 }

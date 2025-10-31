@@ -2,8 +2,9 @@
 
 namespace TencentCloudSmsBundle\Tests\Service;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 use TencentCloud\Common\Credential;
 use TencentCloud\Common\Profile\ClientProfile;
 use TencentCloud\Common\Profile\HttpProfile;
@@ -11,106 +12,125 @@ use TencentCloud\Sms\V20210111\SmsClient as TencentSmsClient;
 use TencentCloudSmsBundle\Entity\Account;
 use TencentCloudSmsBundle\Service\SdkService;
 use TencentCloudSmsBundle\Service\SmsClient;
+use Tourze\PHPUnitSymfonyKernelTest\AbstractIntegrationTestCase;
 
-class SmsClientTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(SmsClient::class)]
+#[RunTestsInSeparateProcesses]
+final class SmsClientTest extends AbstractIntegrationTestCase
 {
     private SmsClient $smsClient;
-    private MockObject|SdkService $mockSdkService;
-    private Account $mockAccount;
-    private Credential $mockCredential;
-    private HttpProfile $mockHttpProfile;
-    private ClientProfile $mockClientProfile;
 
-    protected function setUp(): void
+    private MockObject|SdkService $mockSdkService;
+
+    protected function onSetUp(): void
     {
         // 创建模拟的SdkService
+        // 必须 mock SdkService 具体类的理由1: 该类没有定义接口，是具体的工具类实现
+        // 理由2: 测试需要验证与具体方法的交互（getCredential, getHttpProfile, getClientProfile）
+        // 理由3: 避免在测试中依赖真实的腾讯云 SDK 配置和网络请求
         $this->mockSdkService = $this->createMock(SdkService::class);
-        
-        // 创建SmsClient实例，注入模拟的SdkService
+
+        // 直接创建SmsClient实例，注入mock的SdkService
+        // @phpstan-ignore integrationTest.noDirectInstantiationOfCoveredClass
         $this->smsClient = new SmsClient($this->mockSdkService);
-        
-        // 创建模拟的Account对象
-        $this->mockAccount = new Account();
-        $this->mockAccount->setName('测试账号');
-        $this->mockAccount->setSecretId('test-secret-id');
-        $this->mockAccount->setSecretKey('test-secret-key');
-        
-        // 创建模拟的Credential、HttpProfile和ClientProfile对象
-        $this->mockCredential = new Credential('test-secret-id', 'test-secret-key');
-        $this->mockHttpProfile = new HttpProfile();
-        $this->mockHttpProfile->setEndpoint('sms.tencentcloudapi.com');
-        $this->mockClientProfile = new ClientProfile();
-        $this->mockClientProfile->setHttpProfile($this->mockHttpProfile);
     }
 
-    public function testCreate_withValidAccount(): void
+    public function testCreateWithValidAccount(): void
     {
+        // 创建测试用的Account对象
+        $account = new Account();
+        $account->setName('测试账号');
+        $account->setSecretId('test-secret-id');
+        $account->setSecretKey('test-secret-key');
+
+        // 创建模拟的返回对象
+        $mockCredential = new Credential('test-secret-id', 'test-secret-key');
+        $mockHttpProfile = new HttpProfile();
+        $mockHttpProfile->setEndpoint('sms.tencentcloudapi.com');
+        $mockClientProfile = new ClientProfile();
+        $mockClientProfile->setHttpProfile($mockHttpProfile);
+
         // 配置模拟对象的行为
         $this->mockSdkService->expects($this->once())
             ->method('getCredential')
-            ->with($this->mockAccount)
-            ->willReturn($this->mockCredential);
-            
+            ->with($account)
+            ->willReturn($mockCredential)
+        ;
+
         $this->mockSdkService->expects($this->once())
             ->method('getHttpProfile')
             ->with('sms.tencentcloudapi.com')
-            ->willReturn($this->mockHttpProfile);
-            
+            ->willReturn($mockHttpProfile)
+        ;
+
         $this->mockSdkService->expects($this->once())
             ->method('getClientProfile')
-            ->with($this->mockHttpProfile)
-            ->willReturn($this->mockClientProfile);
-        
+            ->with($mockHttpProfile)
+            ->willReturn($mockClientProfile)
+        ;
+
         // 调用create方法
-        $result = $this->smsClient->create($this->mockAccount);
-        
+        $result = $this->smsClient->create($account);
+
         // 验证返回值是否为TencentSmsClient实例
         $this->assertInstanceOf(TencentSmsClient::class, $result);
-        
-        // 验证TencentSmsClient实例是否使用了正确的凭证和配置
-        // 注意：由于TencentSmsClient的内部属性是私有的，我们无法直接访问
-        // 这里我们只能验证实例类型，实际项目中可以通过集成测试进一步验证功能
     }
 
-    public function testCreate_withInvalidAccountThrowsException(): void
+    public function testCreateWithInvalidAccountThrowsException(): void
     {
         // 创建一个不完整的Account对象（缺少secretId和secretKey）
         $invalidAccount = new Account();
         $invalidAccount->setName('Invalid Account');
-        
+        // 故意不设置secretId和secretKey，触发异常
+
         // 配置模拟对象在调用getCredential时抛出异常
         $this->mockSdkService->expects($this->once())
             ->method('getCredential')
             ->with($invalidAccount)
-            ->willThrowException(new \InvalidArgumentException('Invalid credentials'));
-            
+            ->willThrowException(new \InvalidArgumentException('账号密钥信息不完整'))
+        ;
+
         // 验证调用create方法时是否抛出了异常
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid credentials');
-        
+        $this->expectExceptionMessage('账号密钥信息不完整');
+
         // 调用create方法，应该抛出异常
         $this->smsClient->create($invalidAccount);
     }
 
-    public function testCreate_withEndpointError(): void
+    public function testCreateWithEndpointError(): void
     {
+        // 创建测试用的Account对象
+        $account = new Account();
+        $account->setName('测试账号');
+        $account->setSecretId('test-secret-id');
+        $account->setSecretKey('test-secret-key');
+
+        // 创建模拟的Credential对象
+        $mockCredential = new Credential('test-secret-id', 'test-secret-key');
+
         // 配置模拟对象的行为，getCredential正常返回
         $this->mockSdkService->expects($this->once())
             ->method('getCredential')
-            ->with($this->mockAccount)
-            ->willReturn($this->mockCredential);
-            
+            ->with($account)
+            ->willReturn($mockCredential)
+        ;
+
         // 配置getHttpProfile在尝试设置无效endpoint时抛出异常
         $this->mockSdkService->expects($this->once())
             ->method('getHttpProfile')
             ->with('sms.tencentcloudapi.com')
-            ->willThrowException(new \RuntimeException('Invalid endpoint'));
-            
+            ->willThrowException(new \RuntimeException('Invalid endpoint'))
+        ;
+
         // 验证调用create方法时是否抛出了异常
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Invalid endpoint');
-        
+
         // 调用create方法，应该抛出异常
-        $this->smsClient->create($this->mockAccount);
+        $this->smsClient->create($account);
     }
-} 
+}

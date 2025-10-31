@@ -13,9 +13,19 @@ class ImageService
      */
     public function getBase64FromUrl(string $url): string
     {
+        // 验证URL不为空
+        if ('' === $url) {
+            throw new SignatureException(sprintf('无法读取图片文件：%s', $url));
+        }
+
         // 读取图片内容
-        $imageContent = @file_get_contents($url);
-        if ($imageContent === false) {
+        try {
+            $imageContent = @file_get_contents($url);
+        } catch (\ValueError $e) {
+            throw new SignatureException(sprintf('无法读取图片文件：%s', $url));
+        }
+
+        if (false === $imageContent) {
             throw new SignatureException(sprintf('无法读取图片文件：%s', $url));
         }
 
@@ -24,7 +34,11 @@ class ImageService
 
         // 如果是 data URI，去掉前缀
         if (str_starts_with($base64, 'data:image/')) {
-            $base64 = preg_replace('/^data:image\/[^;]+;base64,/', '', $base64);
+            $result = preg_replace('/^data:image\/[^;]+;base64,/', '', $base64);
+            if (null === $result) {
+                throw new SignatureException('图片 base64 处理失败');
+            }
+            $base64 = $result;
         }
 
         return $base64;

@@ -20,6 +20,7 @@ use TencentCloudSmsBundle\Service\StatisticsSyncService;
 class SyncStatisticsCommand extends Command
 {
     public const NAME = 'tencent-cloud:sms:sync-statistics';
+
     public function __construct(
         private readonly StatisticsSyncService $syncService,
         private readonly AccountRepository $accountRepository,
@@ -33,20 +34,33 @@ class SyncStatisticsCommand extends Command
         $this
             ->addOption('start-time', null, InputOption::VALUE_REQUIRED, '开始时间 (Y-m-d H:i:s)')
             ->addOption('end-time', null, InputOption::VALUE_REQUIRED, '结束时间 (Y-m-d H:i:s)')
-            ->addOption('account-id', null, InputOption::VALUE_REQUIRED, '指定同步的账号ID');
+            ->addOption('account-id', null, InputOption::VALUE_REQUIRED, '指定同步的账号ID')
+        ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
 
-        $startTime = new \DateTimeImmutable($input->getOption('start-time') ?? 'now -1 day');
-        $endTime = new \DateTimeImmutable($input->getOption('end-time') ?? 'now');
+        $startTimeOption = $input->getOption('start-time');
+        $endTimeOption = $input->getOption('end-time');
+
+        $startTime = new \DateTimeImmutable(is_string($startTimeOption) ? $startTimeOption : 'now -1 day');
+        $endTime = new \DateTimeImmutable(is_string($endTimeOption) ? $endTimeOption : 'now');
         $accountId = $input->getOption('account-id');
 
-        $accounts = $accountId !== null
-            ? [$this->entityManager->getReference(Account::class, $accountId)]
-            : $this->accountRepository->findBy(['isEnabled' => true]);
+        if (null !== $accountId) {
+            $accountIdStr = is_string($accountId) || is_int($accountId) ? (string) $accountId : '';
+            $account = $this->entityManager->find(Account::class, $accountId);
+            if (null === $account) {
+                $io->error(sprintf('Account with ID %s not found', $accountIdStr));
+
+                return Command::FAILURE;
+            }
+            $accounts = [$account];
+        } else {
+            $accounts = $this->accountRepository->findBy(['isEnabled' => true]);
+        }
 
         foreach ($accounts as $account) {
             try {
@@ -55,6 +69,7 @@ class SyncStatisticsCommand extends Command
                 $io->success(sprintf('Successfully synced statistics for account: %s', $account->getId()));
             } catch (\Throwable $e) {
                 $io->error(sprintf('Failed to sync statistics for account %s: %s', $account->getId(), $e->getMessage()));
+
                 return Command::FAILURE;
             }
         }

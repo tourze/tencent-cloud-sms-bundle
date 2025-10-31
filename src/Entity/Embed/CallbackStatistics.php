@@ -37,10 +37,9 @@ class CallbackStatistics
         return $this->callbackCount;
     }
 
-    public function setCallbackCount(int $callbackCount): self
+    public function setCallbackCount(int $callbackCount): void
     {
         $this->callbackCount = $callbackCount;
-        return $this;
     }
 
     public function getCallbackSuccessCount(): int
@@ -48,10 +47,9 @@ class CallbackStatistics
         return $this->callbackSuccessCount;
     }
 
-    public function setCallbackSuccessCount(int $callbackSuccessCount): self
+    public function setCallbackSuccessCount(int $callbackSuccessCount): void
     {
         $this->callbackSuccessCount = $callbackSuccessCount;
-        return $this;
     }
 
     public function getCallbackFailCount(): int
@@ -59,10 +57,9 @@ class CallbackStatistics
         return $this->callbackFailCount;
     }
 
-    public function setCallbackFailCount(int $callbackFailCount): self
+    public function setCallbackFailCount(int $callbackFailCount): void
     {
         $this->callbackFailCount = $callbackFailCount;
-        return $this;
     }
 
     public function getInternalErrorCount(): int
@@ -70,10 +67,9 @@ class CallbackStatistics
         return $this->internalErrorCount;
     }
 
-    public function setInternalErrorCount(int $internalErrorCount): self
+    public function setInternalErrorCount(int $internalErrorCount): void
     {
         $this->internalErrorCount = $internalErrorCount;
-        return $this;
     }
 
     public function getInvalidNumberCount(): int
@@ -81,10 +77,9 @@ class CallbackStatistics
         return $this->invalidNumberCount;
     }
 
-    public function setInvalidNumberCount(int $invalidNumberCount): self
+    public function setInvalidNumberCount(int $invalidNumberCount): void
     {
         $this->invalidNumberCount = $invalidNumberCount;
-        return $this;
     }
 
     public function getShutdownErrorCount(): int
@@ -92,10 +87,9 @@ class CallbackStatistics
         return $this->shutdownErrorCount;
     }
 
-    public function setShutdownErrorCount(int $shutdownErrorCount): self
+    public function setShutdownErrorCount(int $shutdownErrorCount): void
     {
         $this->shutdownErrorCount = $shutdownErrorCount;
-        return $this;
     }
 
     public function getBlackListCount(): int
@@ -103,10 +97,9 @@ class CallbackStatistics
         return $this->blackListCount;
     }
 
-    public function setBlackListCount(int $blackListCount): self
+    public function setBlackListCount(int $blackListCount): void
     {
         $this->blackListCount = $blackListCount;
-        return $this;
     }
 
     public function getFrequencyLimitCount(): int
@@ -114,9 +107,8 @@ class CallbackStatistics
         return $this->frequencyLimitCount;
     }
 
-    public function setFrequencyLimitCount(int $frequencyLimitCount): self
+    public function setFrequencyLimitCount(int $frequencyLimitCount): void
     {
         $this->frequencyLimitCount = $frequencyLimitCount;
-        return $this;
     }
 }

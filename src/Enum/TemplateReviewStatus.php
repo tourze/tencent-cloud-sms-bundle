@@ -2,13 +2,14 @@
 
 namespace TencentCloudSmsBundle\Enum;
 
+use Tourze\EnumExtra\BadgeInterface;
 use Tourze\EnumExtra\Itemable;
 use Tourze\EnumExtra\ItemTrait;
 use Tourze\EnumExtra\Labelable;
 use Tourze\EnumExtra\Selectable;
 use Tourze\EnumExtra\SelectTrait;
 
-enum TemplateReviewStatus: int implements Labelable, Itemable, Selectable
+enum TemplateReviewStatus: int implements Labelable, Itemable, Selectable, BadgeInterface
 {
     use ItemTrait;
     use SelectTrait;
@@ -26,5 +27,10 @@ enum TemplateReviewStatus: int implements Labelable, Itemable, Selectable
             self::PENDING => '待生效',
             self::REJECTED => '未通过',
         };
+    }
+
+    public function getBadge(): string
+    {
+        return $this->getLabel();
     }
 }

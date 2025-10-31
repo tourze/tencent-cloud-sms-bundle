@@ -4,7 +4,9 @@ namespace TencentCloudSmsBundle\EventSubscriber;
 
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\ORM\Events;
+use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TencentCloud\Common\Exception\TencentCloudSDKException;
 use TencentCloud\Sms\V20210111\Models\AddSmsTemplateRequest;
 use TencentCloud\Sms\V20210111\Models\DeleteSmsTemplateRequest;
@@ -16,6 +18,8 @@ use TencentCloudSmsBundle\Service\SmsClient;
 #[AsEntityListener(event: Events::prePersist, method: 'createRemoteTemplate', entity: SmsTemplate::class)]
 #[AsEntityListener(event: Events::preUpdate, method: 'updateRemoteTemplate', entity: SmsTemplate::class)]
 #[AsEntityListener(event: Events::preRemove, method: 'deleteRemoteTemplate', entity: SmsTemplate::class)]
+#[Autoconfigure(public: true)]
+#[WithMonologChannel(channel: 'tencent_cloud_sms')]
 class SmsTemplateListener
 {
     public function __construct(
@@ -34,20 +38,34 @@ class SmsTemplateListener
             return;
         }
 
+        $account = $template->getAccount();
+        if (null === $account) {
+            throw new TemplateException('模板账号不能为空');
+        }
+
+        $templateType = $template->getTemplateType();
+        if (null === $templateType) {
+            throw new TemplateException('模板类型不能为空');
+        }
+
         try {
             // 实例化 SMS 的 client 对象
-            $client = $this->smsClient->create($template->getAccount());
+            $client = $this->smsClient->create($account);
 
             // 实例化一个请求对象
             $req = new AddSmsTemplateRequest();
             $params = [
-                "TemplateName" => $template->getTemplateName(),
-                "TemplateContent" => $template->getTemplateContent(),
-                "SmsType" => $template->getTemplateType()->value,
-                "International" => $template->isInternational() ? 1 : 0,
-                "Remark" => $template->getRemark(),
+                'TemplateName' => $template->getTemplateName(),
+                'TemplateContent' => $template->getTemplateContent(),
+                'SmsType' => $templateType->value,
+                'International' => $template->isInternational() ? 1 : 0,
+                'Remark' => $template->getRemark(),
             ];
-            $req->fromJsonString(json_encode($params));
+            $jsonString = json_encode($params);
+            if (false === $jsonString) {
+                throw new TemplateException('JSON编码失败');
+            }
+            $req->fromJsonString($jsonString);
 
             // 发起添加模板请求
             $resp = $client->AddSmsTemplate($req);
@@ -66,11 +84,7 @@ class SmsTemplateListener
                 'code' => $e->getCode(),
             ]);
 
-            throw new TemplateException(
-                sprintf('创建模板失败：%s', $e->getMessage()),
-                $e->getCode(),
-                $e
-            );
+            throw new TemplateException(sprintf('创建模板失败：%s', $e->getMessage()), $e->getCode(), $e);
         }
     }
 
@@ -84,21 +98,35 @@ class SmsTemplateListener
             return;
         }
 
+        $account = $template->getAccount();
+        if (null === $account) {
+            throw new TemplateException('模板账号不能为空');
+        }
+
+        $templateType = $template->getTemplateType();
+        if (null === $templateType) {
+            throw new TemplateException('模板类型不能为空');
+        }
+
         try {
             // 实例化 SMS 的 client 对象
-            $client = $this->smsClient->create($template->getAccount());
+            $client = $this->smsClient->create($account);
 
             // 实例化一个请求对象
             $req = new ModifySmsTemplateRequest();
             $params = [
-                "TemplateId" => $template->getTemplateId(),
-                "TemplateName" => $template->getTemplateName(),
-                "TemplateContent" => $template->getTemplateContent(),
-                "SmsType" => $template->getTemplateType()->value,
-                "International" => $template->isInternational() ? 1 : 0,
-                "Remark" => $template->getRemark(),
+                'TemplateId' => $template->getTemplateId(),
+                'TemplateName' => $template->getTemplateName(),
+                'TemplateContent' => $template->getTemplateContent(),
+                'SmsType' => $templateType->value,
+                'International' => $template->isInternational() ? 1 : 0,
+                'Remark' => $template->getRemark(),
             ];
-            $req->fromJsonString(json_encode($params));
+            $jsonString = json_encode($params);
+            if (false === $jsonString) {
+                throw new TemplateException('JSON编码失败');
+            }
+            $req->fromJsonString($jsonString);
 
             // 发起修改模板请求
             $client->ModifySmsTemplate($req);
@@ -115,11 +143,7 @@ class SmsTemplateListener
                 'code' => $e->getCode(),
             ]);
 
-            throw new TemplateException(
-                sprintf('更新模板失败：%s', $e->getMessage()),
-                $e->getCode(),
-                $e
-            );
+            throw new TemplateException(sprintf('更新模板失败：%s', $e->getMessage()), $e->getCode(), $e);
         }
     }
 
@@ -133,16 +157,25 @@ class SmsTemplateListener
             return;
         }
 
+        $account = $template->getAccount();
+        if (null === $account) {
+            throw new TemplateException('模板账号不能为空');
+        }
+
         try {
             // 实例化 SMS 的 client 对象
-            $client = $this->smsClient->create($template->getAccount());
+            $client = $this->smsClient->create($account);
 
             // 实例化一个请求对象
             $req = new DeleteSmsTemplateRequest();
             $params = [
-                "TemplateId" => $template->getTemplateId(),
+                'TemplateId' => $template->getTemplateId(),
             ];
-            $req->fromJsonString(json_encode($params));
+            $jsonString = json_encode($params);
+            if (false === $jsonString) {
+                throw new TemplateException('JSON编码失败');
+            }
+            $req->fromJsonString($jsonString);
 
             // 发起删除模板请求
             $client->DeleteSmsTemplate($req);
@@ -159,11 +192,7 @@ class SmsTemplateListener
                 'code' => $e->getCode(),
             ]);
 
-            throw new TemplateException(
-                sprintf('删除模板失败：%s', $e->getMessage()),
-                $e->getCode(),
-                $e
-            );
+            throw new TemplateException(sprintf('删除模板失败：%s', $e->getMessage()), $e->getCode(), $e);
         }
     }
 }

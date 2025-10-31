@@ -4,6 +4,7 @@ namespace TencentCloudSmsBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 use TencentCloudSmsBundle\Entity\Embed\CallbackStatistics;
 use TencentCloudSmsBundle\Entity\Embed\PackageStatistics;
 use TencentCloudSmsBundle\Entity\Embed\SendStatistics;
@@ -16,24 +17,31 @@ use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 class SmsStatistics implements \Stringable
 {
     use TimestampableAware;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
-    private ?int $id = 0;
+    private int $id = 0;
 
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, options: ['comment' => '统计小时'])]
-    private \DateTimeImmutable $hour;
+    #[Assert\NotNull(message: '统计小时不能为空')]
+    #[Assert\Type(type: '\DateTimeImmutable')]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '统计小时'])]
+    private ?\DateTimeImmutable $hour = null;
 
-    #[ORM\ManyToOne(targetEntity: Account::class)]
-    #[ORM\JoinColumn(name: 'account_id', referencedColumnName: 'id', nullable: false)]
-    private Account $account;
+    #[Assert\NotNull(message: '腾讯云账号不能为空')]
+    #[ORM\ManyToOne(targetEntity: Account::class, cascade: ['persist'])]
+    #[ORM\JoinColumn(name: 'account_id', referencedColumnName: 'id', nullable: true)]
+    private ?Account $account = null;
 
+    #[Assert\Valid]
     #[ORM\Embedded(class: SendStatistics::class, columnPrefix: 'send_')]
     private SendStatistics $sendStatistics;
 
+    #[Assert\Valid]
     #[ORM\Embedded(class: CallbackStatistics::class, columnPrefix: 'callback_')]
     private CallbackStatistics $callbackStatistics;
 
+    #[Assert\Valid]
     #[ORM\Embedded(class: PackageStatistics::class, columnPrefix: 'package_')]
     private PackageStatistics $packageStatistics;
 
@@ -44,31 +52,29 @@ class SmsStatistics implements \Stringable
         $this->packageStatistics = new PackageStatistics();
     }
 
-    public function getId(): ?int
+    public function getId(): int
     {
         return $this->id;
     }
 
-    public function getHour(): \DateTimeImmutable
+    public function getHour(): ?\DateTimeImmutable
     {
         return $this->hour;
     }
 
-    public function setHour(\DateTimeImmutable $hour): self
+    public function setHour(?\DateTimeImmutable $hour): void
     {
         $this->hour = $hour;
-        return $this;
     }
 
-    public function getAccount(): Account
+    public function getAccount(): ?Account
     {
         return $this->account;
     }
 
-    public function setAccount(Account $account): self
+    public function setAccount(?Account $account): void
     {
         $this->account = $account;
-        return $this;
     }
 
     public function getSendStatistics(): SendStatistics
@@ -88,6 +94,9 @@ class SmsStatistics implements \Stringable
 
     public function __toString(): string
     {
-        return sprintf('[%s] %s', $this->hour->format('Y-m-d H:i'), $this->account->getName());
+        $hourStr = $this->hour?->format('Y-m-d H:i') ?? 'N/A';
+        $accountName = $this->account?->getName() ?? 'Unknown Account';
+
+        return sprintf('[%s] %s', $hourStr, $accountName);
     }
 }

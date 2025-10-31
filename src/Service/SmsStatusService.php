@@ -3,14 +3,17 @@
 namespace TencentCloudSmsBundle\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
 use TencentCloud\Common\Exception\TencentCloudSDKException;
-use TencentCloud\Sms\V20210111\Models\PullSmsSendStatus;
 use TencentCloud\Sms\V20210111\Models\PullSmsSendStatusByPhoneNumberRequest;
+use TencentCloudSmsBundle\Entity\Account;
 use TencentCloudSmsBundle\Entity\SmsRecipient;
 use TencentCloudSmsBundle\Enum\SendStatus;
+use TencentCloudSmsBundle\Exception\JsonEncodingException;
 use TencentCloudSmsBundle\Repository\SmsRecipientRepository;
 
+#[WithMonologChannel(channel: 'tencent_cloud_sms')]
 class SmsStatusService
 {
     public function __construct(
@@ -32,14 +35,23 @@ class SmsStatusService
         $recipients = $this->recipientRepository->findNeedSyncStatus($oneHourAgo);
 
         // 按账号分组
+        /** @var array<int, SmsRecipient[]> $groupedRecipients */
         $groupedRecipients = [];
         foreach ($recipients as $recipient) {
-            $accountId = $recipient->getMessage()->getAccount()->getId();
+            $message = $recipient->getMessage();
+            if (null === $message) {
+                continue;
+            }
+            $account = $message->getAccount();
+            if (null === $account) {
+                continue;
+            }
+            $accountId = $account->getId();
             $groupedRecipients[$accountId][] = $recipient;
         }
 
         // 按账号同步状态
-        foreach ($groupedRecipients as $accountId => $accountRecipients) {
+        foreach ($groupedRecipients as $accountRecipients) {
             $this->syncStatusByAccount($accountRecipients);
         }
     }
@@ -53,14 +65,23 @@ class SmsStatusService
         $recipients = $this->recipientRepository->findUnknownStatus($limit);
 
         // 按账号分组
+        /** @var array<int, SmsRecipient[]> $groupedRecipients */
         $groupedRecipients = [];
         foreach ($recipients as $recipient) {
-            $accountId = $recipient->getMessage()->getAccount()->getId();
+            $message = $recipient->getMessage();
+            if (null === $message) {
+                continue;
+            }
+            $account = $message->getAccount();
+            if (null === $account) {
+                continue;
+            }
+            $accountId = $account->getId();
             $groupedRecipients[$accountId][] = $recipient;
         }
 
         // 按账号同步状态
-        foreach ($groupedRecipients as $accountId => $accountRecipients) {
+        foreach ($groupedRecipients as $accountRecipients) {
             $this->syncStatusByAccount($accountRecipients);
         }
     }
@@ -72,77 +93,176 @@ class SmsStatusService
      */
     private function syncStatusByAccount(array $recipients): void
     {
-        if (empty($recipients)) {
+        if (0 === count($recipients)) {
             return;
         }
 
-        $account = $recipients[0]->getMessage()->getAccount();
+        $message = $recipients[0]->getMessage();
+        if (null === $message) {
+            return;
+        }
+        $account = $message->getAccount();
+        if (null === $account) {
+            return;
+        }
         $client = $this->smsClient->create($account);
 
         try {
-            // 构建请求
-            $req = new PullSmsSendStatusByPhoneNumberRequest();
-            $params = [
-                'SendDateTime' => date('YmdHis', strtotime('-1 hour')), // 拉取最近 1 小时的数据
-                'Offset' => 0,
-                'Limit' => 100,
-                'PhoneNumber' => '+' . $recipients[0]->getPhoneNumber()->getPhoneNumber(),
-                'SmsSdkAppId' => $account->getSecretId(),
-            ];
-            $req->fromJsonString(json_encode($params));
-
-            // 发送请求
-            $resp = $client->PullSmsSendStatusByPhoneNumber($req);
-            /** @var PullSmsSendStatus[] $pullStatusSet */
-            $pullStatusSet = $resp->getPullSmsSendStatusSet();
-
-            // 建立序列号映射，方便更新
-            $serialNoMap = [];
-            foreach ($recipients as $recipient) {
-                if ($recipient->getSerialNo() !== null && $recipient->getSerialNo() !== '') {
-                    $serialNoMap[$recipient->getSerialNo()] = $recipient;
-                }
-            }
-
-            foreach ($pullStatusSet as $pullStatus) {
-                $recipient = $serialNoMap[$pullStatus->getSerialNo()] ?? null;
-                if ($recipient === null) {
-                    continue;
-                }
-
-                // 更新状态
-                $recipient
-                    ->setCode($pullStatus->getReportStatus())
-                    ->setStatusMessage($pullStatus->getDescription())
-                    ->setReceiveTime(new \DateTimeImmutable((string) $pullStatus->getUserReceiveTime()))
-                    ->setStatusTime(new \DateTimeImmutable())
-                    ->setRawResponse($pullStatus->serialize());
-
-                // 根据返回码设置状态
-                $status = match ($pullStatus->getReportStatus()) {
-                    'SUCCESS' => SendStatus::SUCCESS,
-                    'RATE_LIMIT_EXCEED' => SendStatus::RATE_LIMIT_EXCEED,
-                    'MOBILE_BLACK' => SendStatus::PHONE_NUMBER_LIMIT,
-                    'INSUFFICIENT_PACKAGE' => SendStatus::INSUFFICIENT_PACKAGE,
-                    default => SendStatus::FAIL,
-                };
-                $recipient->setStatus($status);
-
-                $this->entityManager->persist($recipient);
-
-                $this->logger->info('短信状态同步成功', [
-                    'messageId' => $recipient->getMessage()->getId(),
-                    'phoneNumber' => $recipient->getPhoneNumber()->getPhoneNumber(),
-                    'status' => $status->value,
-                ]);
-            }
-
+            $pullStatusSet = $this->fetchStatusFromTencent($client, $account, $recipients);
+            $this->updateRecipientsStatus($recipients, $pullStatusSet);
             $this->entityManager->flush();
         } catch (TencentCloudSDKException $e) {
-            $this->logger->error('短信状态同步失败', [
-                'account' => $account->getId(),
-                'error' => $e->getMessage(),
-            ]);
+            $this->handleSyncError($account, $e);
         }
+    }
+
+    /**
+     * @param \TencentCloud\Sms\V20210111\SmsClient $client
+     * @param SmsRecipient[] $recipients
+     * @return array<mixed>
+     */
+    private function fetchStatusFromTencent($client, Account $account, array $recipients): array
+    {
+        $req = new PullSmsSendStatusByPhoneNumberRequest();
+        $params = [
+            'SendDateTime' => date('YmdHis', strtotime('-1 hour')),
+            'Offset' => 0,
+            'Limit' => 100,
+            'PhoneNumber' => '+' . ($recipients[0]->getPhoneNumber()?->getPhoneNumber() ?? ''),
+            'SmsSdkAppId' => $account->getSecretId(),
+        ];
+        $jsonString = json_encode($params);
+        if (false === $jsonString) {
+            throw new JsonEncodingException('JSON编码失败');
+        }
+        $req->fromJsonString($jsonString);
+
+        $resp = $client->PullSmsSendStatusByPhoneNumber($req);
+        $statusSet = $resp->getPullSmsSendStatusSet();
+
+        return is_array($statusSet) ? $statusSet : [];
+    }
+
+    /**
+     * @param SmsRecipient[] $recipients
+     * @param array<mixed> $pullStatusSet
+     */
+    private function updateRecipientsStatus(array $recipients, array $pullStatusSet): void
+    {
+        $serialNoMap = $this->buildSerialNoMap($recipients);
+
+        foreach ($pullStatusSet as $pullStatus) {
+            if (!is_object($pullStatus) || !method_exists($pullStatus, 'getSerialNo')) {
+                continue;
+            }
+
+            $serialNo = $pullStatus->getSerialNo();
+            if (!is_string($serialNo)) {
+                continue;
+            }
+
+            $recipient = $serialNoMap[$serialNo] ?? null;
+            if (null === $recipient) {
+                continue;
+            }
+
+            $this->updateRecipientFromPullStatus($recipient, $pullStatus);
+        }
+    }
+
+    /**
+     * @param SmsRecipient[] $recipients
+     * @return array<string, SmsRecipient>
+     */
+    private function buildSerialNoMap(array $recipients): array
+    {
+        $serialNoMap = [];
+        foreach ($recipients as $recipient) {
+            if (null !== $recipient->getSerialNo() && '' !== $recipient->getSerialNo()) {
+                $serialNoMap[$recipient->getSerialNo()] = $recipient;
+            }
+        }
+
+        return $serialNoMap;
+    }
+
+    /**
+     * @param object $pullStatus
+     */
+    private function updateRecipientFromPullStatus(SmsRecipient $recipient, object $pullStatus): void
+    {
+        if (
+            !method_exists($pullStatus, 'getReportStatus')
+            || !method_exists($pullStatus, 'getDescription')
+            || !method_exists($pullStatus, 'getUserReceiveTime')
+            || !method_exists($pullStatus, 'serialize')
+        ) {
+            return;
+        }
+
+        $reportStatus = $pullStatus->getReportStatus();
+        $description = $pullStatus->getDescription();
+        $userReceiveTime = $pullStatus->getUserReceiveTime();
+
+        if (!is_string($reportStatus) && null !== $reportStatus) {
+            return;
+        }
+        if (!is_string($description) && null !== $description) {
+            return;
+        }
+
+        $recipient->setCode($reportStatus);
+        $recipient->setStatusMessage($description);
+
+        if (is_string($userReceiveTime) || is_int($userReceiveTime)) {
+            $recipient->setReceiveTime(new \DateTimeImmutable((string) $userReceiveTime));
+        }
+
+        $recipient->setStatusTime(new \DateTimeImmutable());
+
+        $serialized = $pullStatus->serialize();
+        if (is_array($serialized)) {
+            /** @var array<string, mixed> $typedSerialized */
+            $typedSerialized = $serialized;
+            $recipient->setRawResponse($typedSerialized);
+        }
+
+        if (is_string($reportStatus)) {
+            $status = $this->mapStatusFromCode($reportStatus);
+            $recipient->setStatus($status);
+            $this->logStatusUpdate($recipient, $status);
+        }
+
+        $this->entityManager->persist($recipient);
+    }
+
+    private function mapStatusFromCode(string $reportStatus): SendStatus
+    {
+        return match ($reportStatus) {
+            'SUCCESS' => SendStatus::SUCCESS,
+            'RATE_LIMIT_EXCEED' => SendStatus::RATE_LIMIT_EXCEED,
+            'MOBILE_BLACK' => SendStatus::PHONE_NUMBER_LIMIT,
+            'INSUFFICIENT_PACKAGE' => SendStatus::INSUFFICIENT_PACKAGE,
+            default => SendStatus::FAIL,
+        };
+    }
+
+    private function logStatusUpdate(SmsRecipient $recipient, SendStatus $status): void
+    {
+        $message = $recipient->getMessage();
+        $phoneNumber = $recipient->getPhoneNumber();
+        $this->logger->info('短信状态同步成功', [
+            'messageId' => $message?->getId(),
+            'phoneNumber' => $phoneNumber?->getPhoneNumber(),
+            'status' => $status->value,
+        ]);
+    }
+
+    private function handleSyncError(Account $account, TencentCloudSDKException $e): void
+    {
+        $this->logger->error('短信状态同步失败', [
+            'account' => $account->getId(),
+            'error' => $e->getMessage(),
+        ]);
     }
 }

@@ -7,7 +7,7 @@ use TencentCloudSmsBundle\Entity\Account;
 
 class SmsClient
 {
-    private const ENDPOINT = "sms.tencentcloudapi.com";
+    private const ENDPOINT = 'sms.tencentcloudapi.com';
 
     public function __construct(
         private readonly SdkService $sdkService,
@@ -22,7 +22,7 @@ class SmsClient
         // 实例化 SMS 的 client 对象
         return new TencentSmsClient(
             $cred,
-            "",
+            '',
             $this->sdkService->getClientProfile(
                 $this->sdkService->getHttpProfile(self::ENDPOINT)
             )

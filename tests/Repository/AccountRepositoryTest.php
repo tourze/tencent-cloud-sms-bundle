@@ -2,35 +2,119 @@
 
 namespace TencentCloudSmsBundle\Tests\Repository;
 
-use Doctrine\Persistence\ManagerRegistry;
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use TencentCloudSmsBundle\Entity\Account;
 use TencentCloudSmsBundle\Repository\AccountRepository;
+use Tourze\PHPUnitSymfonyKernelTest\AbstractRepositoryTestCase;
 
-class AccountRepositoryTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(AccountRepository::class)]
+#[RunTestsInSeparateProcesses]
+final class AccountRepositoryTest extends AbstractRepositoryTestCase
 {
     private AccountRepository $repository;
-    private ManagerRegistry $registry;
 
-    public function testCanBeInstantiated(): void
+    public function testCount(): void
     {
-        $this->assertInstanceOf(AccountRepository::class, $this->repository);
+        $count = $this->repository->count([]);
+        $this->assertIsInt($count);
+        $this->assertGreaterThanOrEqual(0, $count);
     }
 
-    public function testExtendsServiceEntityRepository(): void
+    public function testCountWithCriteria(): void
     {
-        $this->assertInstanceOf('Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository', $this->repository);
+        $count = $this->repository->count(['valid' => true]);
+        $this->assertIsInt($count);
+        $this->assertGreaterThanOrEqual(0, $count);
     }
 
-    public function testRepositoryConfiguration(): void
+    public function testFindBy(): void
     {
-        // Test basic repository functionality without requiring database connection
-        $this->assertInstanceOf(AccountRepository::class, $this->repository);
+        $results = $this->repository->findBy([]);
+        $this->assertIsArray($results);
+        foreach ($results as $result) {
+            $this->assertInstanceOf(Account::class, $result);
+        }
     }
 
-    protected function setUp(): void
+    public function testFindByWithLimit(): void
     {
-        $this->registry = $this->createMock(ManagerRegistry::class);
-        $this->repository = new AccountRepository($this->registry);
+        $results = $this->repository->findBy([], null, 5);
+        $this->assertIsArray($results);
+        $this->assertLessThanOrEqual(5, count($results));
+    }
+
+    public function testFindByWithOffset(): void
+    {
+        $results = $this->repository->findBy([], null, null, 1);
+        $this->assertIsArray($results);
+    }
+
+    public function testFindOneBy(): void
+    {
+        $result = $this->repository->findOneBy([]);
+        $this->assertTrue(null === $result || $result instanceof Account);
+    }
+
+    public function testFindOneByWithCriteria(): void
+    {
+        $result = $this->repository->findOneBy(['valid' => true]);
+        if (null !== $result) {
+            $this->assertInstanceOf(Account::class, $result);
+            $this->assertTrue($result->isValid());
+        }
+    }
+
+    public function testSave(): void
+    {
+        $account = new Account();
+        $account->setName('Test Account');
+        $account->setSecretId('test-secret-id');
+        $account->setSecretKey('test-secret-key');
+        $account->setValid(true);
+
+        $this->repository->save($account, false);
+        $this->assertNotNull($account->getId());
+    }
+
+    public function testRemove(): void
+    {
+        $account = new Account();
+        $account->setName('Test Account for Removal');
+        $account->setSecretId('test-secret-id-remove');
+        $account->setSecretKey('test-secret-key-remove');
+        $account->setValid(false);
+
+        $this->repository->save($account, true);
+        $accountId = $account->getId();
+
+        $this->repository->remove($account, true);
+
+        $removedAccount = $this->repository->find($accountId);
+        $this->assertNull($removedAccount);
+    }
+
+    protected function onSetUp(): void
+    {
+        $this->repository = self::getService(AccountRepository::class);
+    }
+
+    protected function createNewEntity(): object
+    {
+        $entity = new Account();
+        $entity->setName('Test Account ' . uniqid());
+        $entity->setSecretId('test-secret-id-' . uniqid());
+        $entity->setSecretKey('test-secret-key-' . uniqid());
+        $entity->setValid(true);
+
+        return $entity;
+    }
+
+    protected function getRepository(): AccountRepository
+    {
+        return $this->repository;
     }
 }

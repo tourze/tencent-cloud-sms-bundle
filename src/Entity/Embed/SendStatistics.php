@@ -22,10 +22,9 @@ class SendStatistics
         return $this->requestCount;
     }
 
-    public function setRequestCount(int $requestCount): self
+    public function setRequestCount(int $requestCount): void
     {
         $this->requestCount = $requestCount;
-        return $this;
     }
 
     public function getRequestSuccessCount(): int
@@ -33,10 +32,9 @@ class SendStatistics
         return $this->requestSuccessCount;
     }
 
-    public function setRequestSuccessCount(int $requestSuccessCount): self
+    public function setRequestSuccessCount(int $requestSuccessCount): void
     {
         $this->requestSuccessCount = $requestSuccessCount;
-        return $this;
     }
 
     public function getRequestFailCount(): int
@@ -44,9 +42,8 @@ class SendStatistics
         return $this->requestFailCount;
     }
 
-    public function setRequestFailCount(int $requestFailCount): self
+    public function setRequestFailCount(int $requestFailCount): void
     {
         $this->requestFailCount = $requestFailCount;
-        return $this;
     }
 }

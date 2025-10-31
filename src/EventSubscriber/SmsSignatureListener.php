@@ -4,7 +4,9 @@ namespace TencentCloudSmsBundle\EventSubscriber;
 
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\ORM\Events;
+use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TencentCloud\Common\Exception\TencentCloudSDKException;
 use TencentCloud\Sms\V20210111\Models\AddSmsSignRequest;
 use TencentCloud\Sms\V20210111\Models\DeleteSmsSignRequest;
@@ -17,6 +19,8 @@ use TencentCloudSmsBundle\Service\SmsClient;
 #[AsEntityListener(event: Events::prePersist, method: 'createRemoteSignature', entity: SmsSignature::class)]
 #[AsEntityListener(event: Events::preUpdate, method: 'updateRemoteSignature', entity: SmsSignature::class)]
 #[AsEntityListener(event: Events::preRemove, method: 'deleteRemoteSignature', entity: SmsSignature::class)]
+#[Autoconfigure(public: true)]
+#[WithMonologChannel(channel: 'tencent_cloud_sms')]
 class SmsSignatureListener
 {
     public function __construct(
@@ -36,22 +40,51 @@ class SmsSignatureListener
             return;
         }
 
+        $account = $signature->getAccount();
+        if (null === $account) {
+            throw new SignatureException('签名账号不能为空');
+        }
+
+        $signType = $signature->getSignType();
+        if (null === $signType) {
+            throw new SignatureException('签名类型不能为空');
+        }
+
+        $documentType = $signature->getDocumentType();
+        if (null === $documentType) {
+            throw new SignatureException('证明类型不能为空');
+        }
+
+        $signPurpose = $signature->getSignPurpose();
+        if (null === $signPurpose) {
+            throw new SignatureException('签名用途不能为空');
+        }
+
+        $documentUrl = $signature->getDocumentUrl();
+        if (null === $documentUrl) {
+            throw new SignatureException('证明文件URL不能为空');
+        }
+
         try {
             // 实例化 SMS 的 client 对象
-            $client = $this->smsClient->create($signature->getAccount());
+            $client = $this->smsClient->create($account);
 
             // 实例化一个请求对象
             $req = new AddSmsSignRequest();
             $params = [
-                "SignName" => $signature->getSignName(),
-                "SignType" => $signature->getSignType()->value,
-                "DocumentType" => $signature->getDocumentType()->value,
-                "International" => $signature->isInternational() ? 1 : 0,
-                "SignPurpose" => $signature->getSignPurpose()->value,
-                "ProofImage" => $this->imageService->getBase64FromUrl($signature->getDocumentUrl()),
-                "Remark" => $signature->getSignContent(),
+                'SignName' => $signature->getSignName(),
+                'SignType' => $signType->value,
+                'DocumentType' => $documentType->value,
+                'International' => $signature->isInternational() ? 1 : 0,
+                'SignPurpose' => $signPurpose->value,
+                'ProofImage' => $this->imageService->getBase64FromUrl($documentUrl),
+                'Remark' => $signature->getSignContent(),
             ];
-            $req->fromJsonString(json_encode($params));
+            $jsonString = json_encode($params);
+            if (false === $jsonString) {
+                throw new SignatureException('JSON编码失败');
+            }
+            $req->fromJsonString($jsonString);
 
             // 发起添加签名请求
             $resp = $client->AddSmsSign($req);
@@ -70,11 +103,7 @@ class SmsSignatureListener
                 'code' => $e->getCode(),
             ]);
 
-            throw new SignatureException(
-                sprintf('创建签名失败：%s', $e->getMessage()),
-                $e->getCode(),
-                $e
-            );
+            throw new SignatureException(sprintf('创建签名失败：%s', $e->getMessage()), $e->getCode(), $e);
         }
     }
 
@@ -88,23 +117,52 @@ class SmsSignatureListener
             return;
         }
 
+        $account = $signature->getAccount();
+        if (null === $account) {
+            throw new SignatureException('签名账号不能为空');
+        }
+
+        $signType = $signature->getSignType();
+        if (null === $signType) {
+            throw new SignatureException('签名类型不能为空');
+        }
+
+        $documentType = $signature->getDocumentType();
+        if (null === $documentType) {
+            throw new SignatureException('证明类型不能为空');
+        }
+
+        $signPurpose = $signature->getSignPurpose();
+        if (null === $signPurpose) {
+            throw new SignatureException('签名用途不能为空');
+        }
+
+        $documentUrl = $signature->getDocumentUrl();
+        if (null === $documentUrl) {
+            throw new SignatureException('证明文件URL不能为空');
+        }
+
         try {
             // 实例化 SMS 的 client 对象
-            $client = $this->smsClient->create($signature->getAccount());
+            $client = $this->smsClient->create($account);
 
             // 实例化一个请求对象
             $req = new ModifySmsSignRequest();
             $params = [
-                "SignId" => $signature->getSignId(),
-                "SignName" => $signature->getSignName(),
-                "SignType" => $signature->getSignType()->value,
-                "DocumentType" => $signature->getDocumentType()->value,
-                "International" => $signature->isInternational() ? 1 : 0,
-                "SignPurpose" => $signature->getSignPurpose()->value,
-                "ProofImage" => $this->imageService->getBase64FromUrl($signature->getDocumentUrl()),
-                "Remark" => $signature->getSignContent(),
+                'SignId' => $signature->getSignId(),
+                'SignName' => $signature->getSignName(),
+                'SignType' => $signType->value,
+                'DocumentType' => $documentType->value,
+                'International' => $signature->isInternational() ? 1 : 0,
+                'SignPurpose' => $signPurpose->value,
+                'ProofImage' => $this->imageService->getBase64FromUrl($documentUrl),
+                'Remark' => $signature->getSignContent(),
             ];
-            $req->fromJsonString(json_encode($params));
+            $jsonString = json_encode($params);
+            if (false === $jsonString) {
+                throw new SignatureException('JSON编码失败');
+            }
+            $req->fromJsonString($jsonString);
 
             // 发起修改签名请求
             $client->ModifySmsSign($req);
@@ -121,11 +179,7 @@ class SmsSignatureListener
                 'code' => $e->getCode(),
             ]);
 
-            throw new SignatureException(
-                sprintf('更新签名失败：%s', $e->getMessage()),
-                $e->getCode(),
-                $e
-            );
+            throw new SignatureException(sprintf('更新签名失败：%s', $e->getMessage()), $e->getCode(), $e);
         }
     }
 
@@ -139,16 +193,25 @@ class SmsSignatureListener
             return;
         }
 
+        $account = $signature->getAccount();
+        if (null === $account) {
+            throw new SignatureException('签名账号不能为空');
+        }
+
         try {
             // 实例化 SMS 的 client 对象
-            $client = $this->smsClient->create($signature->getAccount());
+            $client = $this->smsClient->create($account);
 
             // 实例化一个请求对象
             $req = new DeleteSmsSignRequest();
             $params = [
-                "SignId" => $signature->getSignId(),
+                'SignId' => $signature->getSignId(),
             ];
-            $req->fromJsonString(json_encode($params));
+            $jsonString = json_encode($params);
+            if (false === $jsonString) {
+                throw new SignatureException('JSON编码失败');
+            }
+            $req->fromJsonString($jsonString);
 
             // 发起删除签名请求
             $client->DeleteSmsSign($req);
@@ -165,11 +228,7 @@ class SmsSignatureListener
                 'code' => $e->getCode(),
             ]);
 
-            throw new SignatureException(
-                sprintf('删除签名失败：%s', $e->getMessage()),
-                $e->getCode(),
-                $e
-            );
+            throw new SignatureException(sprintf('删除签名失败：%s', $e->getMessage()), $e->getCode(), $e);
         }
     }
 }

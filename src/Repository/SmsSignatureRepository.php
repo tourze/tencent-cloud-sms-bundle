@@ -5,13 +5,12 @@ namespace TencentCloudSmsBundle\Repository;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use TencentCloudSmsBundle\Entity\SmsSignature;
+use Tourze\PHPUnitSymfonyKernelTest\Attribute\AsRepository;
 
 /**
- * @method SmsSignature|null find($id, $lockMode = null, $lockVersion = null)
- * @method SmsSignature|null findOneBy(array $criteria, array $orderBy = null)
- * @method SmsSignature[] findAll()
- * @method SmsSignature[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @extends ServiceEntityRepository<SmsSignature>
  */
+#[AsRepository(entityClass: SmsSignature::class)]
 class SmsSignatureRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -24,8 +23,29 @@ class SmsSignatureRepository extends ServiceEntityRepository
         return $this->findOneBy(['signId' => $signId]);
     }
 
+    /**
+     * @return SmsSignature[]
+     */
     public function findValidSignatures(): array
     {
         return $this->findBy(['signStatus' => 1, 'valid' => true]);
+    }
+
+    public function save(SmsSignature $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->persist($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    public function remove(SmsSignature $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->remove($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
     }
 }

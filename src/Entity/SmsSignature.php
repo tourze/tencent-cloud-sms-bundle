@@ -6,6 +6,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 use TencentCloudSmsBundle\Enum\DocumentType;
 use TencentCloudSmsBundle\Enum\SignPurpose;
 use TencentCloudSmsBundle\Enum\SignReviewStatus;
@@ -20,53 +21,72 @@ use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
 class SmsSignature implements \Stringable
 {
     use TimestampableAware;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
-    private ?int $id = 0;
+    private int $id = 0;
 
-    #[ORM\ManyToOne(targetEntity: Account::class)]
+    #[ORM\ManyToOne(targetEntity: Account::class, cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: false)]
     private ?Account $account = null;
 
+    #[Assert\Length(max: 20)]
     #[ORM\Column(length: 20, unique: true, options: ['comment' => '签名ID'])]
     private ?string $signId = null;
 
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 100)]
     #[ORM\Column(type: Types::STRING, length: 100, options: ['comment' => '签名名称'])]
     private ?string $signName = null;
 
-    #[ORM\Column(type: Types::STRING, enumType: SignType::class, options: ['comment' => '签名类型'])]
+    #[Assert\Choice(callback: [SignType::class, 'cases'])]
+    #[ORM\Column(type: Types::INTEGER, enumType: SignType::class, options: ['comment' => '签名类型'])]
     private ?SignType $signType = null;
 
-    #[ORM\Column(type: Types::STRING, enumType: DocumentType::class, options: ['comment' => '证明类型'])]
+    #[Assert\Choice(callback: [DocumentType::class, 'cases'])]
+    #[ORM\Column(type: Types::INTEGER, enumType: DocumentType::class, options: ['comment' => '证明类型'])]
     private ?DocumentType $documentType = null;
 
+    #[Assert\Length(max: 255)]
+    #[Assert\Url]
     #[ORM\Column(type: Types::STRING, length: 255, options: ['comment' => '证明文件'])]
     private ?string $documentUrl = null;
 
-    #[ORM\Column(type: Types::STRING, enumType: SignReviewStatus::class, options: ['comment' => '签名状态'])]
+    #[Assert\Choice(callback: [SignReviewStatus::class, 'cases'])]
+    #[ORM\Column(type: Types::INTEGER, enumType: SignReviewStatus::class, options: ['comment' => '签名状态'])]
     private ?SignReviewStatus $signStatus = null;
 
+    #[Assert\Length(max: 65535)]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '审核回复'])]
     private ?string $reviewReply = null;
 
+    #[Assert\Type(type: 'bool')]
     #[ORM\Column(type: Types::BOOLEAN, options: ['comment' => '是否国际/港澳台短信'])]
     private bool $international = false;
 
-    #[ORM\Column(type: Types::STRING, enumType: SignPurpose::class, options: ['comment' => '签名用途'])]
+    #[Assert\Choice(callback: [SignPurpose::class, 'cases'])]
+    #[ORM\Column(type: Types::INTEGER, enumType: SignPurpose::class, options: ['comment' => '签名用途'])]
     private ?SignPurpose $signPurpose = null;
 
+    #[Assert\Length(max: 65535)]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '签名内容'])]
     private ?string $signContent = null;
 
+    /**
+     * @var Collection<int, SmsMessage> 签名关联的短信消息
+     */
     #[ORM\OneToMany(mappedBy: 'signature', targetEntity: SmsMessage::class)]
     private Collection $messages;
 
+    #[Assert\Type(type: 'bool')]
     #[IndexColumn]
     #[TrackColumn]
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '有效', 'default' => 0])]
     private ?bool $valid = false;
 
+    #[Assert\Type(type: 'bool')]
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false, 'comment' => '是否正在同步'])]
     private bool $syncing = false;
 
     public function __construct()
@@ -75,7 +95,7 @@ class SmsSignature implements \Stringable
         $this->messages = new ArrayCollection();
     }
 
-    public function getId(): ?int
+    public function getId(): int
     {
         return $this->id;
     }
@@ -85,10 +105,9 @@ class SmsSignature implements \Stringable
         return $this->syncing;
     }
 
-    public function setSyncing(bool $syncing): static
+    public function setSyncing(bool $syncing): void
     {
         $this->syncing = $syncing;
-        return $this;
     }
 
     public function getAccount(): ?Account
@@ -96,10 +115,9 @@ class SmsSignature implements \Stringable
         return $this->account;
     }
 
-    public function setAccount(?Account $account): static
+    public function setAccount(?Account $account): void
     {
         $this->account = $account;
-        return $this;
     }
 
     public function getSignId(): ?string
@@ -107,10 +125,9 @@ class SmsSignature implements \Stringable
         return $this->signId;
     }
 
-    public function setSignId(?string $signId): static
+    public function setSignId(?string $signId): void
     {
         $this->signId = $signId;
-        return $this;
     }
 
     public function getSignName(): ?string
@@ -118,10 +135,9 @@ class SmsSignature implements \Stringable
         return $this->signName;
     }
 
-    public function setSignName(?string $signName): static
+    public function setSignName(?string $signName): void
     {
         $this->signName = $signName;
-        return $this;
     }
 
     public function getSignType(): ?SignType
@@ -129,10 +145,9 @@ class SmsSignature implements \Stringable
         return $this->signType;
     }
 
-    public function setSignType(?SignType $signType): static
+    public function setSignType(?SignType $signType): void
     {
         $this->signType = $signType;
-        return $this;
     }
 
     public function getDocumentType(): ?DocumentType
@@ -140,10 +155,9 @@ class SmsSignature implements \Stringable
         return $this->documentType;
     }
 
-    public function setDocumentType(?DocumentType $documentType): static
+    public function setDocumentType(?DocumentType $documentType): void
     {
         $this->documentType = $documentType;
-        return $this;
     }
 
     public function getDocumentUrl(): ?string
@@ -151,10 +165,9 @@ class SmsSignature implements \Stringable
         return $this->documentUrl;
     }
 
-    public function setDocumentUrl(?string $documentUrl): static
+    public function setDocumentUrl(?string $documentUrl): void
     {
         $this->documentUrl = $documentUrl;
-        return $this;
     }
 
     public function getSignStatus(): ?SignReviewStatus
@@ -162,10 +175,9 @@ class SmsSignature implements \Stringable
         return $this->signStatus;
     }
 
-    public function setSignStatus(?SignReviewStatus $signStatus): static
+    public function setSignStatus(?SignReviewStatus $signStatus): void
     {
         $this->signStatus = $signStatus;
-        return $this;
     }
 
     public function getReviewReply(): ?string
@@ -173,10 +185,9 @@ class SmsSignature implements \Stringable
         return $this->reviewReply;
     }
 
-    public function setReviewReply(?string $reviewReply): static
+    public function setReviewReply(?string $reviewReply): void
     {
         $this->reviewReply = $reviewReply;
-        return $this;
     }
 
     public function isInternational(): bool
@@ -184,10 +195,9 @@ class SmsSignature implements \Stringable
         return $this->international;
     }
 
-    public function setInternational(bool $international): static
+    public function setInternational(bool $international): void
     {
         $this->international = $international;
-        return $this;
     }
 
     public function getSignPurpose(): ?SignPurpose
@@ -195,10 +205,9 @@ class SmsSignature implements \Stringable
         return $this->signPurpose;
     }
 
-    public function setSignPurpose(?SignPurpose $signPurpose): static
+    public function setSignPurpose(?SignPurpose $signPurpose): void
     {
         $this->signPurpose = $signPurpose;
-        return $this;
     }
 
     public function getSignContent(): ?string
@@ -206,28 +215,28 @@ class SmsSignature implements \Stringable
         return $this->signContent;
     }
 
-    public function setSignContent(?string $signContent): static
+    public function setSignContent(?string $signContent): void
     {
         $this->signContent = $signContent;
-        return $this;
     }
 
+    /**
+     * @return Collection<int, SmsMessage>
+     */
     public function getMessages(): Collection
     {
         return $this->messages;
     }
 
-    public function addMessage(SmsMessage $message): static
+    public function addMessage(SmsMessage $message): void
     {
         if (!$this->messages->contains($message)) {
             $this->messages->add($message);
             $message->setSignature($this->signName ?? '');
         }
-
-        return $this;
     }
 
-    public function removeMessage(SmsMessage $message): static
+    public function removeMessage(SmsMessage $message): void
     {
         if ($this->messages->removeElement($message)) {
             // set the owning side to null (unless already changed)
@@ -235,8 +244,6 @@ class SmsSignature implements \Stringable
                 $message->setSignature('');
             }
         }
-
-        return $this;
     }
 
     public function isValid(): ?bool
@@ -244,11 +251,9 @@ class SmsSignature implements \Stringable
         return $this->valid;
     }
 
-    public function setValid(?bool $valid): self
+    public function setValid(?bool $valid): void
     {
         $this->valid = $valid;
-
-        return $this;
     }
 
     public function __toString(): string
