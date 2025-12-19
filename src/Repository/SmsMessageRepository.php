@@ -11,7 +11,7 @@ use Tourze\PHPUnitSymfonyKernelTest\Attribute\AsRepository;
  * @extends ServiceEntityRepository<SmsMessage>
  */
 #[AsRepository(entityClass: SmsMessage::class)]
-class SmsMessageRepository extends ServiceEntityRepository
+final class SmsMessageRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {

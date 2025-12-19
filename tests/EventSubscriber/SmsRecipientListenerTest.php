@@ -30,28 +30,22 @@ final class SmsRecipientListenerTest extends AbstractEventSubscriberTestCase
         $this->assertInstanceOf(SmsRecipientListener::class, $listener);
     }
 
-    public function testPostPersist(): void
+    public function testPostPersistWithoutMessage(): void
     {
-        // 创建测试用的SmsRecipient
+        // 创建测试用的SmsRecipient（不关联消息）
         $recipient = new SmsRecipient();
 
-        // 创建真实的EntityManager和Event对象
+        // 创建EntityManager和Event对象
         $entityManager = self::getEntityManager();
         $event = new PostPersistEventArgs($recipient, $entityManager);
 
-        // Mock SmsSendService - 需要在任何服务获取之前设置
-        /** @var MockObject&SmsSendService $smsSendService */
-        $smsSendService = $this->createMock(SmsSendService::class);
-        $smsSendService->expects($this->once())
-            ->method('send')
-            ->with($recipient)
-        ;
+        // 通过容器获取SmsRecipientListener服务
+        $listener = self::getService(SmsRecipientListener::class);
 
-        // 为了测试目的，直接实例化SmsRecipientListener以使用我们的Mock服务
-        // @phpstan-ignore integrationTest.noDirectInstantiationOfCoveredClass
-        $listener = new SmsRecipientListener($smsSendService);
+        // 测试postPersist方法调用 - 应该抛出异常因为recipient没有关联消息
+        $this->expectException(\TencentCloudSmsBundle\Exception\SmsException::class);
+        $this->expectExceptionMessage('短信接收者未关联消息');
 
-        // 测试postPersist方法调用
         $listener->postPersist($recipient, $event);
     }
 }

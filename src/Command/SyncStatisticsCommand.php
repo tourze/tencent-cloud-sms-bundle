@@ -17,7 +17,7 @@ use TencentCloudSmsBundle\Service\StatisticsSyncService;
     name: self::NAME,
     description: '同步腾讯云短信统计数据',
 )]
-class SyncStatisticsCommand extends Command
+final class SyncStatisticsCommand extends Command
 {
     public const NAME = 'tencent-cloud:sms:sync-statistics';
 
@@ -59,7 +59,7 @@ class SyncStatisticsCommand extends Command
             }
             $accounts = [$account];
         } else {
-            $accounts = $this->accountRepository->findBy(['isEnabled' => true]);
+            $accounts = $this->accountRepository->findBy(['valid' => true]);
         }
 
         foreach ($accounts as $account) {

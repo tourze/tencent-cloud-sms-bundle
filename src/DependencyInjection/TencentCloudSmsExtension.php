@@ -4,7 +4,7 @@ namespace TencentCloudSmsBundle\DependencyInjection;
 
 use Tourze\SymfonyDependencyServiceLoader\AutoExtension;
 
-class TencentCloudSmsExtension extends AutoExtension
+final class TencentCloudSmsExtension extends AutoExtension
 {
     protected function getConfigDir(): string
     {

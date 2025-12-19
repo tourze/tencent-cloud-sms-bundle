@@ -15,7 +15,7 @@ use TencentCloudSmsBundle\Exception\JsonEncodingException;
 use TencentCloudSmsBundle\Exception\SmsException;
 
 #[WithMonologChannel(channel: 'tencent_cloud_sms')]
-class SmsSendService
+final class SmsSendService
 {
     public function __construct(
         private readonly SmsClient $smsClient,

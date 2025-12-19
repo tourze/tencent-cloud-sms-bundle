@@ -11,7 +11,7 @@ use Tourze\PHPUnitSymfonyKernelTest\Attribute\AsRepository;
  * @extends ServiceEntityRepository<PhoneNumberInfo>
  */
 #[AsRepository(entityClass: PhoneNumberInfo::class)]
-class PhoneNumberInfoRepository extends ServiceEntityRepository
+final class PhoneNumberInfoRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {

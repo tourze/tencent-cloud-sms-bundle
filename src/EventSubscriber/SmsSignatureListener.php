@@ -21,7 +21,7 @@ use TencentCloudSmsBundle\Service\SmsClient;
 #[AsEntityListener(event: Events::preRemove, method: 'deleteRemoteSignature', entity: SmsSignature::class)]
 #[Autoconfigure(public: true)]
 #[WithMonologChannel(channel: 'tencent_cloud_sms')]
-class SmsSignatureListener
+final class SmsSignatureListener
 {
     public function __construct(
         private readonly SmsClient $smsClient,

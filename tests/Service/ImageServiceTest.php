@@ -20,9 +20,8 @@ final class ImageServiceTest extends AbstractIntegrationTestCase
 
     protected function onSetUp(): void
     {
-        // 直接创建ImageService实例进行单元测试
-        // @phpstan-ignore integrationTest.noDirectInstantiationOfCoveredClass
-        $this->imageService = new ImageService();
+        // 通过容器获取ImageService服务实例
+        $this->imageService = self::getService(ImageService::class);
     }
 
     public function testGetBase64FromUrlWithValidUrl(): void

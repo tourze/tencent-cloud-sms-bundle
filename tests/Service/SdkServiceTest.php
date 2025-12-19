@@ -22,9 +22,8 @@ final class SdkServiceTest extends AbstractIntegrationTestCase
 
     protected function onSetUp(): void
     {
-        // 直接创建SdkService实例进行单元测试
-        // @phpstan-ignore integrationTest.noDirectInstantiationOfCoveredClass
-        $this->sdkService = new SdkService();
+        // 从容器获取SdkService实例进行单元测试
+        $this->sdkService = self::getService(SdkService::class);
 
         // 创建模拟的Account对象
         $this->mockAccount = new Account();

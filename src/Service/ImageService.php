@@ -4,7 +4,7 @@ namespace TencentCloudSmsBundle\Service;
 
 use TencentCloudSmsBundle\Exception\SignatureException;
 
-class ImageService
+final class ImageService
 {
     /**
      * 从 URL 获取图片并转换为 base64 格式

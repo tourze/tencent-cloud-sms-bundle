@@ -25,14 +25,45 @@ final class CallbackStatisticsTest extends TestCase
     public function testGettersAndSetters(string $property, int $value): void
     {
         $entity = $this->createEntity();
-        $setterMethod = 'set' . ucfirst($property);
-        $getterMethod = 'get' . ucfirst($property);
 
-        // @phpstan-ignore-next-line
-        $entity->{$setterMethod}($value);
-
-        // @phpstan-ignore-next-line
-        $this->assertSame($value, $entity->{$getterMethod}(), 'Getter should return the value set by setter');
+        // 使用 switch 语句替代动态方法调用，以满足 PHPStan 要求
+        switch ($property) {
+            case 'callbackCount':
+                $entity->setCallbackCount($value);
+                $this->assertSame($value, $entity->getCallbackCount());
+                break;
+            case 'callbackSuccessCount':
+                $entity->setCallbackSuccessCount($value);
+                $this->assertSame($value, $entity->getCallbackSuccessCount());
+                break;
+            case 'callbackFailCount':
+                $entity->setCallbackFailCount($value);
+                $this->assertSame($value, $entity->getCallbackFailCount());
+                break;
+            case 'internalErrorCount':
+                $entity->setInternalErrorCount($value);
+                $this->assertSame($value, $entity->getInternalErrorCount());
+                break;
+            case 'invalidNumberCount':
+                $entity->setInvalidNumberCount($value);
+                $this->assertSame($value, $entity->getInvalidNumberCount());
+                break;
+            case 'shutdownErrorCount':
+                $entity->setShutdownErrorCount($value);
+                $this->assertSame($value, $entity->getShutdownErrorCount());
+                break;
+            case 'blackListCount':
+                $entity->setBlackListCount($value);
+                $this->assertSame($value, $entity->getBlackListCount());
+                break;
+            case 'frequencyLimitCount':
+                $entity->setFrequencyLimitCount($value);
+                $this->assertSame($value, $entity->getFrequencyLimitCount());
+                break;
+            default:
+                self::fail("Unknown property: {$property}");
+                break;
+        }
     }
 
     /**

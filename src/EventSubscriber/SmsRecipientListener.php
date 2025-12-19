@@ -9,7 +9,7 @@ use TencentCloudSmsBundle\Entity\SmsRecipient;
 use TencentCloudSmsBundle\Service\SmsSendService;
 
 #[AsEntityListener(event: Events::postPersist, entity: SmsRecipient::class)]
-class SmsRecipientListener
+final class SmsRecipientListener
 {
     public function __construct(
         private readonly SmsSendService $smsSendService,

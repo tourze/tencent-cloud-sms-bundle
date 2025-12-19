@@ -13,7 +13,7 @@ use TencentCloudSmsBundle\Service\SmsStatusService;
     name: self::NAME,
     description: '同步未知状态的短信记录',
 )]
-class SyncUnknownStatusCommand extends Command
+final class SyncUnknownStatusCommand extends Command
 {
     public const NAME = 'tencent-cloud:sms:sync:unknown-status';
 

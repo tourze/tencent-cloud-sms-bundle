@@ -15,7 +15,7 @@ use TencentCloudSmsBundle\Exception\SignatureException;
 use TencentCloudSmsBundle\Repository\PhoneNumberInfoRepository;
 
 #[WithMonologChannel(channel: 'tencent_cloud_sms')]
-class PhoneNumberInfoService
+final class PhoneNumberInfoService
 {
     private const BATCH_SIZE = 200;
 

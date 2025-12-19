@@ -25,9 +25,8 @@ class AdminMenuTest extends AbstractEasyAdminMenuTestCase
 
     public function testInvokeAddsMenuItems(): void
     {
-        $container = self::getContainer();
         /** @var AdminMenu $adminMenu */
-        $adminMenu = $container->get(AdminMenu::class);
+        $adminMenu = self::getService(AdminMenu::class);
 
         $factory = new MenuFactory();
         $rootItem = $factory->createItem('root');
@@ -62,8 +61,7 @@ class AdminMenuTest extends AbstractEasyAdminMenuTestCase
 
     public function testCanBeInstantiated(): void
     {
-        $container = self::getContainer();
-        $adminMenu = $container->get(AdminMenu::class);
+        $adminMenu = self::getService(AdminMenu::class);
 
         $this->assertInstanceOf(AdminMenu::class, $adminMenu);
     }

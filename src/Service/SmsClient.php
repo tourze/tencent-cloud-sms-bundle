@@ -5,7 +5,7 @@ namespace TencentCloudSmsBundle\Service;
 use TencentCloud\Sms\V20210111\SmsClient as TencentSmsClient;
 use TencentCloudSmsBundle\Entity\Account;
 
-class SmsClient
+final class SmsClient
 {
     private const ENDPOINT = 'sms.tencentcloudapi.com';
 

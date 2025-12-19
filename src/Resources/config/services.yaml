@@ -3,14 +3,17 @@ services:
   _defaults:
     autowire: true      # Automatically injects dependencies in your services.
     autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+    public: false
 
   TencentCloudSmsBundle\Command\:
     resource: '../../Command/'
   TencentCloudSmsBundle\Controller\:
     resource: '../../Controller/'
-  TencentCloudSmsBundle\EventSubscriber\:
-    resource: '../../EventSubscriber/'
-  TencentCloudSmsBundle\Service\:
-    resource: '../../Service/'
   TencentCloudSmsBundle\Repository\:
     resource: '../../Repository/'
+  TencentCloudSmsBundle\Service\:
+    resource: '../../Service/'
+    public: true
+  TencentCloudSmsBundle\EventSubscriber\:
+    resource: '../../EventSubscriber/'
+    public: true

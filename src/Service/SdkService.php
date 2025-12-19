@@ -8,7 +8,7 @@ use TencentCloud\Common\Profile\HttpProfile;
 use TencentCloudSmsBundle\Entity\Account;
 use TencentCloudSmsBundle\Exception\SdkException;
 
-class SdkService
+final class SdkService
 {
     public function getCredential(Account $account): Credential
     {

@@ -20,7 +20,7 @@ use TencentCloudSmsBundle\Service\SmsClient;
 #[AsEntityListener(event: Events::preRemove, method: 'deleteRemoteTemplate', entity: SmsTemplate::class)]
 #[Autoconfigure(public: true)]
 #[WithMonologChannel(channel: 'tencent_cloud_sms')]
-class SmsTemplateListener
+final class SmsTemplateListener
 {
     public function __construct(
         private readonly SmsClient $smsClient,

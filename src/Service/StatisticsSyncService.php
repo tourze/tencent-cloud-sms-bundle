@@ -14,7 +14,7 @@ use TencentCloudSmsBundle\Exception\JsonEncodingException;
 use TencentCloudSmsBundle\Repository\SmsStatisticsRepository;
 
 #[WithMonologChannel(channel: 'tencent_cloud_sms')]
-class StatisticsSyncService
+final class StatisticsSyncService
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,

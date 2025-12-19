@@ -17,7 +17,7 @@ use TencentCloudSmsBundle\Repository\SmsSignatureRepository;
 use TencentCloudSmsBundle\Repository\SmsTemplateRepository;
 
 #[WithMonologChannel(channel: 'tencent_cloud_sms')]
-class StatusSyncService
+final class StatusSyncService
 {
     public function __construct(
         private readonly SmsClient $smsClient,

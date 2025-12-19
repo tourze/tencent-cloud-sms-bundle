@@ -13,7 +13,7 @@ use TencentCloudSmsBundle\Service\PhoneNumberInfoService;
     name: self::NAME,
     description: '同步手机号码信息',
 )]
-class SyncPhoneNumberInfoCommand extends Command
+final class SyncPhoneNumberInfoCommand extends Command
 {
     public const NAME = 'tencent-cloud:sms:sync:phone-number-info';
 

@@ -12,7 +12,7 @@ use TencentCloudSmsBundle\Service\StatusSyncService;
     name: self::NAME,
     description: '同步短信签名状态',
 )]
-class SyncSignStatusCommand extends Command
+final class SyncSignStatusCommand extends Command
 {
     public const NAME = 'tencent-cloud:sms:sync:sign-status';
 
